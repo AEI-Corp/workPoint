@@ -24,21 +24,21 @@ public class AuthService : IAuthServices
 
     public Task<UserRegisterResponseDto> RegisterAsync(RegisterDto registerDto)
     {
-        
+        throw new NotImplementedException();
     }
 
     public Task<UserAuthResponseDto> LoginAsync(LoginDto loginDto)
     {
-        
+        throw new NotImplementedException();
     }
 
     public Task<UserAuthResponseDto> RefreshAsync(RefreshDto refreshDto)
     {
-        
+        throw new NotImplementedException();
     }
 
     public Task<bool> RevokeAsync(RevokeTokenDto revokeTokenDto)
     {
-        
+        throw new NotImplementedException();
     }
 }
