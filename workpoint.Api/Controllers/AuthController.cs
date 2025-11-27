@@ -14,35 +14,56 @@ public class AuthController : ControllerBase
     {
         _authService = authService;
     }
-    //TODO
+
+    // --------------------------------------------------------------
+    
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+    public async Task<IActionResult> Login([FromBody] LoginDto request)
     {
-        var result = await _authService.LoginAsync(request.Email, request.Password);
+        var result = await _authService.LoginAsync(request);
+
         if (result == null)
             return Unauthorized("Credenciales incorrectas.");
 
-        return Ok(result);
+        return Ok(result); // <-- Debe devolver UserAuthResponseDto
+    }
+    
+    
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto request)
+    {
+        var result = await _authService.RegisterAsync(request);
+
+        if (result == null)
+            return BadRequest("No se pudo registrar el usuario.");
+
+        return Ok(result); // <-- Debe devolver UserRegisterResponseDto
     }
 
+    
+    
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+    public async Task<IActionResult> Refresh([FromBody] RefreshDto request)
     {
-        var result = await _authService.RefreshTokenAsync(refreshToken);
+        var result = await _authService.RefreshAsync(request);
 
         if (result == null)
             return Unauthorized("Refresh Token inválido.");
 
-        return Ok(result);
+        return Ok(result); // <-- Debe devolver UserAuthResponseDto de nuevo
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+    
+    
+    [HttpPost("revoke")]
+    public async Task<IActionResult> Revoke([FromBody] RevokeTokenDto request)
     {
-        var result = await _authService.RegisterAsync(request);
-        if (!result)
-            return BadRequest("No se pudo registrar el usuario.");
+        var result = await _authService.RevokeAsync(request);
 
-        return Ok("Usuario registrado correctamente.");
+        if (!result)
+            return BadRequest("No se pudo revocar el token.");
+
+        return Ok("Token revocado correctamente.");
     }
 }

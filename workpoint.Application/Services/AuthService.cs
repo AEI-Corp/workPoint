@@ -57,7 +57,7 @@ public class AuthService : IAuthServices
             Email = registerDto.Email,
             PasswordHash = passwordHash,
             NumDocument = registerDto.NumDocument,
-            RoleID = registerDto.Role,
+            RoleId = registerDto.Role,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -72,7 +72,7 @@ public class AuthService : IAuthServices
             LastName = created.LastName,
             Email = created.Email,
             NumDocument = created.NumDocument,
-            Role = created.RoleID,
+            Role = created.RoleId,
             CreatedAt = created.CreatedAt,
             UpdatedAt = created.UpdatedAt
         };
@@ -154,7 +154,7 @@ public class AuthService : IAuthServices
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Role, user.RoleID),
+            new Claim(ClaimTypes.Role, user.RoleId.ToString()),
             new Claim(ClaimTypes.Email, user.Email)
         };
 
@@ -220,7 +220,7 @@ public class AuthService : IAuthServices
             Email = user.Email,
             UserName = user.UserName,
             NumDocument = user.NumDocument,
-            Role = user.RoleID,
+            Role = user.RoleId,
             Token = jwtString,
             RefreshToken = refresh,
             CreatedAt = user.CreatedAt,
