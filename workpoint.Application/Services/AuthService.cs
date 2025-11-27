@@ -44,40 +44,15 @@ public class AuthService : IAuthServices
         
         if(exist != null) 
             throw new ArgumentException($"Ya existe un usuario con este correo {registerDto.Email}");
-        
-        // Hash de la contraseña
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
-        var now = DateTime.UtcNow;
-        var user = new User
-        {
-            Name = registerDto.Name,
-            LastName = registerDto.LastName,
-            UserName = registerDto.UserName,
-            Email = registerDto.Email,
-            PasswordHash = passwordHash,
-            NumDocument = registerDto.NumDocument,
-            RoleId = registerDto.Role,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-        
-        var created = await _repository.CreateAsync(user);
-        
-        var response = new UserRegisterResponseDto
-        {
-            Id = created.Id,
-            UserName = created.UserName,
-            Name = created.Name,
-            LastName = created.LastName,
-            Email = created.Email,
-            NumDocument = created.NumDocument,
-            Role = created.RoleId,
-            CreatedAt = created.CreatedAt,
-            UpdatedAt = created.UpdatedAt
-        };
+        var user = _mapper.Map<User>(registerDto);
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+        user.CreatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
 
-        return response;
+        await _repository.CreateAsync(user);
+
+        return _mapper.Map<UserRegisterResponseDto>(user);
     }
 
     public async Task<UserAuthResponseDto> LoginAsync(LoginDto loginDto)
@@ -101,7 +76,7 @@ public class AuthService : IAuthServices
         
         // 1) Obtener claims aun cuando el token esté expirado.
         var principal = getPrincipalFromExpireToken(refreshDto.Token);
-        // TODO:
+        // TODO: 
         var userIdClaim = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         
         if (!int.TryParse(userIdClaim, out var userId))
@@ -201,32 +176,11 @@ public class AuthService : IAuthServices
     private async Task<UserAuthResponseDto> GenerateTokensAsync(User user)
     {
         var jwtToken = GenerateToken(user);
-        var jwtString = new JwtSecurityTokenHandler().WriteToken(jwtToken);
-        
-        var refresh = GenerateRefresh();
+        var refresh =  GenerateRefresh();
+
         user.RefreshToken = refresh;
-        user.RefreshTokenExpire = DateTime.UtcNow.AddDays(_refreshTokenDays);
-        user.UpdatedAt = DateTime.UtcNow;
-        
-        // Guardar nuevo refresh token en DB
         await _repository.UpdateAsync(user);
 
-        // Mapear respuesta
-        var response = new UserAuthResponseDto
-        {
-            Id = user.Id,
-            Name = user.Name,
-            LastName = user.LastName,
-            Email = user.Email,
-            UserName = user.UserName,
-            NumDocument = user.NumDocument,
-            Role = user.RoleId,
-            Token = jwtString,
-            RefreshToken = refresh,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
-
-        return response;
+        return _mapper.Map<UserAuthResponseDto>(user);
     }
 }

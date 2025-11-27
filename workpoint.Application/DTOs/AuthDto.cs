@@ -45,7 +45,7 @@ public class RegisterDto
     public string Password { get; set; }
     
     public string NumDocument { get; set; }
-    public int Role { get; set; }
+    public int RoleId { get; set; }
 }
 
 public class LoginDto
