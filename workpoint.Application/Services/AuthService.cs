@@ -179,8 +179,15 @@ public class AuthService : IAuthServices
         var refresh =  GenerateRefresh();
 
         user.RefreshToken = refresh;
+        user.RefreshTokenExpire = DateTime.UtcNow.AddDays(7);
         await _repository.UpdateAsync(user);
 
-        return _mapper.Map<UserAuthResponseDto>(user);
+        var response = _mapper.Map<UserAuthResponseDto>(user);
+
+        var handelr = new JwtSecurityTokenHandler();
+        response.Token = handelr.WriteToken(jwtToken);
+        
+        return response;
     }
+    
 }

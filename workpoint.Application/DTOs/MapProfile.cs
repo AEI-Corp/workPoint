@@ -12,5 +12,8 @@ public class MapProfile : Profile
         
         CreateMap<User, UserRegisterResponseDto>();
         CreateMap<UserRegisterResponseDto, User>();
+        
+        CreateMap<UserAuthResponseDto, User>();
+        CreateMap<User, UserAuthResponseDto>();
     }
 }
