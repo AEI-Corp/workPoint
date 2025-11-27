@@ -11,10 +11,11 @@ public class User
     public string Email { get; set; }
     public string PasswordHash { get; set; }
     public string NumDocument { get; set; }
-    public string RoleID { get; set; }
+    public int RoleId { get; set; }
     
-    public string RefreshToken { get; set; }
-    public DateTime RefreshTokenExpire { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpire { get; set; }
+    
     
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

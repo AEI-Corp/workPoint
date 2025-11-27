@@ -10,7 +10,7 @@ public class UserRegisterResponseDto
     public string Email { get; set; }
     
     public string NumDocument { get; set; }
-    public string Role { get; set; }
+    public int Role { get; set; }
     
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -27,9 +27,9 @@ public class UserAuthResponseDto
     public string Email { get; set; }
     
     public string Token { get; set; }
-    
+    public string RefreshToken { get; set; } 
     public string NumDocument { get; set; }
-    public string Role { get; set; }
+    public int Role { get; set; }
     
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -45,7 +45,7 @@ public class RegisterDto
     public string Password { get; set; }
     
     public string NumDocument { get; set; }
-    public string Role { get; set; }
+    public int RoleId { get; set; }
 }
 
 public class LoginDto

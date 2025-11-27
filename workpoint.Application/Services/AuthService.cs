@@ -6,7 +6,6 @@ using System.Text;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens.Experimental;
 using workpoint.Application.DTOs;
 using workpoint.Application.Interfaces;
 using workpoint.Domain.Entities;
@@ -21,6 +20,12 @@ public class AuthService : IAuthServices
     private readonly IConfiguration _config;
     private readonly IMapper _mapper;
 
+    
+    // Duraciones configurables
+    private readonly int _jwtMinutes = 20;
+    private readonly int _refreshTokenDays = 7;
+    
+    
     public AuthService(IRepository<User> repository, IConfiguration config, IMapper mapper)
     {
         _repository = repository;
@@ -40,19 +45,14 @@ public class AuthService : IAuthServices
         if(exist != null) 
             throw new ArgumentException($"Ya existe un usuario con este correo {registerDto.Email}");
 
-        //TODO:
-        _repository.CreateAsync();
-        
-        return new UserRegisterResponseDto
-        {
-            Name = registerDto.Name,
-            LastName = registerDto.LastName,
-            Email = registerDto.Email,
-            UserName = registerDto.UserName,
-            NumDocument = registerDto.NumDocument,
-            Role = registerDto.Role,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var user = _mapper.Map<User>(registerDto);
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+        user.CreatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _repository.CreateAsync(user);
+
+        return _mapper.Map<UserRegisterResponseDto>(user);
     }
 
     public async Task<UserAuthResponseDto> LoginAsync(LoginDto loginDto)
@@ -63,20 +63,56 @@ public class AuthService : IAuthServices
         if (exist == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, exist.PasswordHash))
             throw new SecurityException("Credenciales incorrectas");
 
-        return GenerateTokens(exist);
-    }
-
-    // TODO:
-    public Task<UserAuthResponseDto> RefreshAsync(RefreshDto refreshDto)
-    {
-        
+        // Genera token + refresh y guarda el refresh en DB
+        return await GenerateTokensAsync(exist);
     }
 
     
-    // TODO:
-    public Task<bool> RevokeAsync(RevokeTokenDto revokeTokenDto)
+    public async Task<UserAuthResponseDto> RefreshAsync(RefreshDto refreshDto)
     {
+        if (refreshDto == null || string.IsNullOrEmpty(refreshDto.Token) ||
+            string.IsNullOrEmpty(refreshDto.RefreshToken))
+            throw new ArgumentException("Token y refreshToken son requeridos.");
         
+        // 1) Obtener claims aun cuando el token esté expirado.
+        var principal = getPrincipalFromExpireToken(refreshDto.Token);
+        // TODO: 
+        var userIdClaim = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (!int.TryParse(userIdClaim, out var userId))
+            throw new SecurityException("Token invalido");
+        
+        var user = await _repository.GetByIdAsync(userId);
+        if (user == null)
+            throw new SecurityException("Usuario no encontrado");
+
+        // 2) Verificar que el refresh token coincide y no esté expirado
+        if (user.RefreshToken != refreshDto.RefreshToken || user.RefreshTokenExpire <= DateTime.UtcNow)
+            throw new SecurityException("Refresh token invalido o expirado");
+
+        // 3) Generar nuevos tokens y guardar el nuevo refresh token
+        return await GenerateTokensAsync(user);
+    }
+
+    
+    
+    public async Task<bool> RevokeAsync(RevokeTokenDto revokeTokenDto)
+    {
+        if(revokeTokenDto == null || string.IsNullOrEmpty(revokeTokenDto.Email))
+            throw new ArgumentException("Email es requerido.");
+
+        var users = await _repository.GetAllAsync();
+        var user = users.FirstOrDefault(u => u.Email == revokeTokenDto.Email);
+        if (user == null) return false;
+        
+        
+        // Invalidate refresh token
+        user.RefreshToken = null;
+        user.RefreshTokenExpire = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(user);
+        return true;
     }
 
     // Json Web Token
@@ -93,7 +129,7 @@ public class AuthService : IAuthServices
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Role, user.RoleID),
+            new Claim(ClaimTypes.Role, user.RoleId.ToString()),
             new Claim(ClaimTypes.Email, user.Email)
         };
 
@@ -102,7 +138,7 @@ public class AuthService : IAuthServices
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims:claims,
-            expires: DateTime.UtcNow.AddMinutes(20),
+            expires: DateTime.UtcNow.AddMinutes(_jwtMinutes),
             signingCredentials:credentials
             );
     }
@@ -116,42 +152,42 @@ public class AuthService : IAuthServices
         return Convert.ToBase64String(array);
     }
 
-    private ClaimsPrincipal getPrincipalFromExpire(string token)
+    private ClaimsPrincipal getPrincipalFromExpireToken(string token)
     {
-        var parameters = new TokenValidationParameters
+        var tokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+            ValidateLifetime = false
         };
 
         var handler = new JwtSecurityTokenHandler();
-        var principal = handler.ValidateToken(token, parameters, out var securityToken);
+        var principal = handler.ValidateToken(token, tokenValidationParameters, out var securityToken);
 
         if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256))
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,  StringComparison.InvariantCultureIgnoreCase))
             throw new SecurityException("El token no es valido");
 
         return principal;
     }
 
-    private UserAuthResponseDto GenerateTokens(User user)
+    private async Task<UserAuthResponseDto> GenerateTokensAsync(User user)
     {
-        var token = GenerateToken(user);
-        var refresh = GenerateRefresh();
+        var jwtToken = GenerateToken(user);
+        var refresh =  GenerateRefresh();
 
-        return new UserAuthResponseDto()
-        {
-            Id = user.Id,
-            Name = user.Name,
-            LastName = user.LastName,
-            Email = user.Email,
-            UserName = user.UserName,
-            NumDocument = user.NumDocument,
-            Role = user.RoleID,
-            Token = token.ToString(),
-            UpdatedAt = DateTime.UtcNow
-        };
+        user.RefreshToken = refresh;
+        user.RefreshTokenExpire = DateTime.UtcNow.AddDays(7);
+        await _repository.UpdateAsync(user);
+
+        var response = _mapper.Map<UserAuthResponseDto>(user);
+
+        var handelr = new JwtSecurityTokenHandler();
+        response.Token = handelr.WriteToken(jwtToken);
+        
+        return response;
     }
+    
 }
