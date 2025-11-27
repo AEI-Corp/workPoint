@@ -16,6 +16,7 @@ public class User
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpire { get; set; }
     
+    
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
