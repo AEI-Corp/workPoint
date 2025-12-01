@@ -74,15 +74,38 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
+// -------------------------------------------------------------------
+// CORS: permitir cualquier origen en entorno de desarrollo
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCorsPolicy", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
+// ------------------------------------------------------
+//deploy
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Local")
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Product Catalog API v1");
+        c.RoutePrefix = string.Empty;
+    });
+}
 
 // Middlewares
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    
+    app.UseCors("DevCorsPolicy"); // CORS
 }
 
 app.UseHttpsRedirection();
