@@ -22,4 +22,9 @@ public class User
     
     // Relation:
     public Role Role { get; set; }
+    public DocumentType DocumentType { get; set; }
+
+
+    // Inverse Relations:
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
