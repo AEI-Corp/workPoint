@@ -12,6 +12,4 @@ public class Payment
     public Booking Booking { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
     
-    // Inverse relation:
-    
 }

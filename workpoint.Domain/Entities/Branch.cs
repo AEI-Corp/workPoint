@@ -7,8 +7,9 @@ public class Branch
     public string BranchName { get; set; }
     public string Address { get; set; }
     public bool Active { get; set; }
+    public ICollection<Photo> Photos { get; set; }
     
-    //TODO:
-    // public List<string?> UrlImagesBranches { get; set; }
-    public List<Image> Images { get; set; } = new();
+    // Inverse Relation:
+    public ICollection<Space> Spaces { get; set; } = new List<Space>();
+
 } 

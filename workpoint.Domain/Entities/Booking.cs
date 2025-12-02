@@ -13,4 +13,7 @@ public class Booking
     public User User { get; set; }
     public Space Space { get; set; }
     
+    // Relation 1:1
+    public Payment Payment { get; set; }
+    
 }
