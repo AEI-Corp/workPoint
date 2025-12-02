@@ -1,9 +1,9 @@
-﻿namespace workpoint.Domain.Entities;
+namespace workpoint.Domain.Entities;
 
-public class Role
+public class DocumentType
 {
     public int Id { get; set; }
-    public string RoleName { get; set; } = string.Empty;
+    public string DocType { get; set; } = string.Empty;
     public bool Active { get; set; }
     
     // Inverse Relation:
