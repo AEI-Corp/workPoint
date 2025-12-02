@@ -8,6 +8,9 @@ public class Booking
     public DateTime StartHour { get; set; }
     public DateTime EndHour { get; set; }
     public bool Available { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    
     
     // Relations
     public User User { get; set; }

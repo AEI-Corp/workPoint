@@ -6,7 +6,9 @@ public class Payment
     public int BookingId { get; set; }
     public int PaymentMethodId { get; set; }
     public decimal Total { get; set; }
-    public bool PaymentDone { get; set; }
+    public bool IsPaid { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     
     // Relation:
     public Booking Booking { get; set; }

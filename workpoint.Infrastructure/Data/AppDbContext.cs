@@ -42,6 +42,17 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
     }
     
-    public DbSet<User> Users { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
+    public DbSet<Branch> Branches { get; set; }
+    public DbSet<Categorie> Categories { get; set; }
+    public DbSet<City> Cities { get; set; }
+    public DbSet<Department> Departments { get; set; }
+    public DbSet<DocumentType> DocumentTypes { get; set; }
+    public DbSet<Payment> Payments { get; set; }
+    public DbSet<PaymentMethod> PaymentMethods { get; set; }
+    public DbSet<Photo> Photos { get; set; }
     public DbSet<Role> Roles { get; set; }
+    public DbSet<Space> Spaces { get; set; }
+    public DbSet<User> Users { get; set; }
+    
 }

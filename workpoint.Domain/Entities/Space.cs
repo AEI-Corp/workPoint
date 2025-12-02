@@ -5,12 +5,14 @@ public class Space
     public int Id { get; set; }
     public int CategorieId { get; set; }
     public int MaxCapacity { get; set; }
-    public string SpaceName { get; set; }
+    public string SpaceName { get; set; } = string.Empty;
     public int BranchId { get; set; }
     public decimal Price { get; set; }
-    public string Description { get; set; }
-    public int? UserId { get; set; }        // when an User posts a Space
-    public ICollection<Photo> Photos { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public int? UserId { get; set; }                    // when an User posts a Space
+    public ICollection<Photo> Photos { get; set; }      // List of photos
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     
     // Relations
     public User User { get; set; }

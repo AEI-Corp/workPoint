@@ -3,7 +3,7 @@ namespace workpoint.Domain.Entities;
 public class City
 {
     public int Id { get; set; }
-    public string CityName { get; set; }
+    public string CityName { get; set; } = string.Empty;
     public int DepartmentId { get; set; }
     public bool Active { get; set; }
     
