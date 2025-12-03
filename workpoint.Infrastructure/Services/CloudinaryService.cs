@@ -1,4 +1,5 @@
 using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using workpoint.Application.DTOs;
@@ -30,8 +31,20 @@ public class CloudinaryService : ICloudinaryService
         return new Cloudinary(account);
     }
     
-    public Task<string?> UploadPhotoAsync(UploadPhotoDto entityDto)
+    public async Task<string?> UploadPhotoAsync(UploadPhotoDto entityDto)
     {
-        throw new NotImplementedException();
+        if (entityDto == null) throw new ArgumentNullException("It couldnt Upload a Photo without a photo");
+
+        var uploadparams = new ImageUploadParams()
+        {
+            File = new FileDescription(null, entityDto.Photo),
+            Folder = entityDto.SpaceId != null ? $"workpoint/spaces/{entityDto.SpaceId}" : "workpoint/general"
+        };
+
+        var uploadResult = await _cloudinary.UploadAsync(uploadparams);
+
+        if (uploadResult.Error != null) throw new Exception(uploadResult.Error.Message);
+
+        return uploadResult.SecureUrl.AbsoluteUri;
     }
 }
