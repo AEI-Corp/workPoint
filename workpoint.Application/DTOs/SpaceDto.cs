@@ -11,7 +11,9 @@ public class SpaceCreateDto
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
     public int? UserId { get; set; }                    // when an User posts a Space
-    public ICollection<Photo> Photos { get; set; }      // List of photos
+    // public ICollection<Photo>? Photos { get; set; }      // List of photos
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } 
 }
 
 
@@ -26,4 +28,17 @@ public class SpaceUpdateDto
     public string Description { get; set; } = string.Empty;
     public int? UserId { get; set; }                    // when an User posts a Space
     public ICollection<Photo> Photos { get; set; }      // List of photos
+}
+
+public class ResponseSpaceDto
+{
+    public int Id { get; set; }
+    public int CategorieId { get; set; }
+    public int MaxCapacity { get; set; }
+    public string SpaceName { get; set; } = string.Empty;
+    public int BranchId { get; set; }
+    public decimal Price { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public int? UserId { get; set; }                    // when an User posts a Space
+    public ICollection<Photo> Photos { get; set; } 
 }

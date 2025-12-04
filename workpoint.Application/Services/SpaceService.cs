@@ -35,7 +35,7 @@ public class SpaceService : ISpaceService
 
     
     // CREATE:
-    public async Task<Space> CreateAsync(SpaceCreateDto spaceDto)
+    public async Task<ResponseSpaceDto> CreateAsync(SpaceCreateDto spaceDto)
     {
         if (spaceDto == null)
             throw new ArgumentNullException(nameof(spaceDto), "El cuerpo de la petición no puede estar vacío.");
@@ -69,7 +69,9 @@ public class SpaceService : ISpaceService
         space.CreatedAt = DateTime.UtcNow;
         space.UpdatedAt = DateTime.UtcNow;
         
-        return await _spaceRepository.CreateAsync(space);
+        var response = await _spaceRepository.CreateAsync(space);
+
+        return _mapper.Map<ResponseSpaceDto>(response);
     }
 
     
@@ -115,10 +117,10 @@ public class SpaceService : ISpaceService
 
     
     // DELETE:
-    public async Task<bool> DeleteAsync(Space space)
+    public async Task<bool> DeleteAsync(int id)
     {
         
-        var exists = await _spaceRepository.GetByIdAsync(space.Id);
+        var exists = await _spaceRepository.GetByIdAsync(id);
 
         if (exists == null)
             return false;
