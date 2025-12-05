@@ -20,8 +20,8 @@ public class MapProfile : Profile
         CreateMap<Space, SpaceCreateDto>();
         CreateMap<Space, ResponseSpaceDto>();
 
-        CreateMap<ResponseSpaceDto, SpaceCreateDto>();
-        CreateMap<SpaceCreateDto, ResponseSpaceDto>();
+        // CreateMap<ResponseSpaceDto, SpaceCreateDto>();
+        // CreateMap<SpaceCreateDto, ResponseSpaceDto>();
 
     }
 }

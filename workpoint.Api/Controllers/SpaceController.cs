@@ -64,6 +64,26 @@ public class SpaceController : ControllerBase
     }
     
     
+    // UPDATE:
+    [HttpPut("update/{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] SpaceUpdateDto spaceDto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        spaceDto.Id = id;
+        
+        var updated = await _spaceService.UpdateAsync(spaceDto);
+        
+        if(!updated)
+            return NotFound(new { message = $"El registro con ID {id} no existe." });
+        
+        return Ok(new {message = $"Espacio actualizado correctamente"});
+        
+    }
+    
+    
+    
     // DELETE:
     [HttpDelete("delete/{id:int}")]
     public async Task<IActionResult> DeleteAsync(int id)
