@@ -4,7 +4,8 @@ public class Photo
 {
     public int Id { get; set; }
     public int? SpaceId { get; set; }
-    public int? BranchId { get; set; }
+
+    
     public string? UrlImage { get; set; } = string.Empty;
     public bool Active { get; set; }
     public DateTime CreatedAt { get; set; }

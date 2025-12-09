@@ -7,7 +7,7 @@ public class Branch
     public string BranchName { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public bool Active { get; set; }
-    public ICollection<Photo> Photos { get; set; }      // List of photos
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
