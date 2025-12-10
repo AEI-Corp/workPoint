@@ -29,7 +29,6 @@ jobs:
           docker push ghcr.io/${{ github.repository }}/backend:latest
           echo " Backend listo"
 
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
