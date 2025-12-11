@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using workpoint.Domain.Interfaces.Repositories;
+using workpoint.Infrastructure.Repositories;
 
 namespace workpoint.Infrastructure.Extensions;
 
@@ -17,6 +19,7 @@ public static class ServiceCollectionExtensions
             )
         );
         
+        services.AddScoped<IBookingRepository, BookingRepository>();
         return services;
     }
 }
