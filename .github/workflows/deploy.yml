@@ -42,20 +42,29 @@ jobs:
           port: 22
           script: |
             echo " Desplegando Backend..."
-            
+
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             docker pull ghcr.io/${{ github.repository }}/backend:latest
             
+            # --- INICIO DE CAMBIOS ---
+            # 1. Creamos una red virtual de Docker. Si ya existe, ignora el error.
+            docker network create workpoint-net || true
+
             docker stop api-backend || true
             docker rm api-backend || true
-            
+
             docker run -d \
               --name api-backend \
               --restart unless-stopped \
-              -p 5001:8080 \
+              --network workpoint-net \ # 2. Asignamos el contenedor a la nueva red
+              -p 5001:8080 \            # 3. Mantenemos el mapeo a 5001 (Puerto externo: 5001)
               ghcr.io/${{ github.repository }}/backend:latest
-            
+            # --- FIN DE CAMBIOS ---
+
+            docker image prune -f
+
+            echo " Backend desplegado en puerto 5001"
             docker image prune -f
             
             echo " Backend desplegado en puerto 5001"
