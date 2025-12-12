@@ -38,15 +38,24 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Desplegar en VPS
+      # 1. PASO DE INSTALACIÓN DE CLAVE (Requiere el input conocido)
+      - name: Instalar SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          script: |
+          # Corregimos el error: proporcionamos un valor a known_hosts
+          known_hosts: 'placeholder' 
+      
+      # 2. PASO DE AGREGAR HOST CONOCIDO
+      - name: Agregar Known Hosts
+        run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      # 3. PASO DE DESPLIEGUE (Usando SSH nativo)
+      - name: Desplegar en VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             echo " Desplegando Backend..."
+            
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
@@ -57,7 +66,6 @@ jobs:
             docker stop api-backend || true
             docker rm api-backend || true
             
-            
             docker run -d \
               --name api-backend \
               --restart unless-stopped \
@@ -67,3 +75,4 @@ jobs:
               
             docker image prune -f
             echo " Backend desplegado en puerto 5001"
+          EOF
