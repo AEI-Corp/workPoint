@@ -8,6 +8,7 @@ using workpoint.Domain.Entities;
 using workpoint.Domain.Interfaces.Repositories;
 using workpoint.Infrastructure.Extensions;
 using workpoint.Infrastructure.Repositories;
+using workpoint.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,11 @@ builder.Services.AddScoped<IAuthServices, AuthService>();
 // Spaces:
 builder.Services.AddScoped<IRepository<Space>, SpaceRepository>();
 builder.Services.AddScoped<ISpaceService, SpaceService>();
+
+// Photos:
+builder.Services.AddScoped<IPhotoRepository, PhotoRepository>(); // 1. Repositorio (Infraestructura)
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>(); // 2. Servicio de almacenamiento (Infraestructura)
+builder.Services.AddScoped<IPhotoService, PhotoService>(); // 3. Servicio de negocio (Aplicación)
 
 builder.Services.AddAuthentication(options =>
     {
