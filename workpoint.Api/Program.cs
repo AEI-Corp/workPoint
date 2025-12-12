@@ -11,6 +11,7 @@ using workpoint.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 

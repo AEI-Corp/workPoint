@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\workpoint.Domain\workpoint.Domain.csproj" />
+    <ProjectReference Include="..\workpoint.Infrastructure\workpoint.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
