@@ -25,6 +25,7 @@ jobs:
       - name: Construir y subir Backend
         run: |
           echo " Construyendo Backend..."
+          REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker build -t ghcr.io/${{ github.repository }}/backend:latest .
           docker push ghcr.io/${{ github.repository }}/backend:latest
           echo " Backend listo"
