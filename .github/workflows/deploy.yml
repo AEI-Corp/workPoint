@@ -70,7 +70,6 @@ jobs:
               --name api-backend \
               --restart unless-stopped \
               --network workpoint-net \
-              -p 5001:8080 \
               ghcr.io/$REPO_NAME_LC/backend:latest
               
             docker image prune -f
