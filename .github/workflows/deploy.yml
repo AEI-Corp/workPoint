@@ -1,10 +1,10 @@
 name: Deploy Backend
 
-on: 
+on:
   push:
     branches: [main, develop]
-    
-permissions: 
+
+permissions:
   packages: write
   contents: read
 
@@ -14,19 +14,24 @@ jobs:
     steps:
       - name: Obtener código
         uses: actions/checkout@v3
-      
+
       - name: Login en GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Construir y subir Backend
         run: |
           echo " Construyendo Backend..."
-          docker build -t ghcr.io/${{ github.repository }}/backend:latest .
-          docker push ghcr.io/${{ github.repository }}/backend:latest
+          REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          docker build -t ghcr.io/$REPO_NAME_LC/backend:latest \
+            -f workpoint.Api/Dockerfile \
+            .
+            
+          docker push ghcr.io/$REPO_NAME_LC/backend:latest
           echo " Backend listo"
 
   deploy:
@@ -42,29 +47,23 @@ jobs:
           port: 22
           script: |
             echo " Desplegando Backend..."
-
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            docker pull ghcr.io/${{ github.repository }}/backend:latest
             
-            # --- INICIO DE CAMBIOS ---
-            # 1. Creamos una red virtual de Docker. Si ya existe, ignora el error.
+            REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            
+            docker pull ghcr.io/$REPO_NAME_LC/backend:latest
+            
             docker network create workpoint-net || true
-
             docker stop api-backend || true
             docker rm api-backend || true
-
+            
+            
             docker run -d \
               --name api-backend \
               --restart unless-stopped \
-              --network workpoint-net \ # 2. Asignamos el contenedor a la nueva red
-              -p 5001:8080 \            # 3. Mantenemos el mapeo a 5001 (Puerto externo: 5001)
-              ghcr.io/${{ github.repository }}/backend:latest
-            # --- FIN DE CAMBIOS ---
-
+              --network workpoint-net \
+              -p 5001:8080 \
+              ghcr.io/$REPO_NAME_LC/backend:latest
+              
             docker image prune -f
-
-            echo " Backend desplegado en puerto 5001"
-            docker image prune -f
-            
             echo " Backend desplegado en puerto 5001"

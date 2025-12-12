@@ -23,10 +23,13 @@ RUN dotnet publish "workpoint.Api.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
 WORKDIR /app
 
 COPY --from=publish /app/publish .
 
-EXPOSE 5001
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "workpoint.Api.dll"]
