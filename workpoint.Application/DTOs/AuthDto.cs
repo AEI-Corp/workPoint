@@ -8,8 +8,10 @@ public class UserRegisterResponseDto
     public string Name { get; set; }
     public string LastName { get; set; }
     public string Email { get; set; }
+    public string Phone { get; set; }
     
     public string NumDocument { get; set; }
+    public int DocumentTypeId { get; set; }
     public int Role { get; set; }
     
     public DateTime CreatedAt { get; set; }
@@ -25,9 +27,11 @@ public class UserAuthResponseDto
     public string Name { get; set; }
     public string LastName { get; set; }
     public string Email { get; set; }
+    public string Phone { get; set; }
     
     public string Token { get; set; }
-    public string RefreshToken { get; set; } 
+    public string RefreshToken { get; set; }
+    public int DocumentTypeId { get; set; }
     public string NumDocument { get; set; }
     public int Role { get; set; }
     
@@ -41,9 +45,11 @@ public class RegisterDto
     public string UserName { get; set; }
     public string Name { get; set; }
     public string LastName { get; set; }
+    public string Phone { get; set; }
     public string Email { get; set; }
     public string Password { get; set; }
     
+    public int DocumentTypeId { get; set; }
     public string NumDocument { get; set; }
     public int RoleId { get; set; }
 }
