@@ -65,4 +65,5 @@ public class AuthController : ControllerBase
 
         return Ok("Token revocado correctamente.");
     }
+    
 }
