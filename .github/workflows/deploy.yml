@@ -45,7 +45,7 @@ jobs:
             echo " Desplegando Backend..."
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
+            REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             docker pull ghcr.io/${{ github.repository }}/backend:latest
             
             # --- INICIO DE CAMBIOS ---
