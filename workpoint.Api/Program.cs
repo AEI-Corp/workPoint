@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using workpoint.Application.Interfaces;
+using workpoint.Application.Service;
 using workpoint.Application.Services;
 using workpoint.Domain.Entities;
 using workpoint.Domain.Interfaces.Repositories;
@@ -10,14 +11,19 @@ using workpoint.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Repositorios y servicios
+// Repositories and Services
 builder.Services.AddScoped<IRepository<User>, UserRepository>();
 builder.Services.AddScoped<IAuthServices, AuthService>();
+
+// Spaces:
+builder.Services.AddScoped<IRepository<Space>, SpaceRepository>();
+builder.Services.AddScoped<ISpaceService, SpaceService>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -42,12 +48,12 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Boton de AUTHORIZE
+// Button of AUTHORIZE
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "WorkPoint API", Version = "v1" });
 
-    // Configurar autorización con JWT
+    // Set autorización with JWT
     c.AddSecurityDefinition("Bearer", new()
     {
         Name = "Authorization",
@@ -75,7 +81,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // -------------------------------------------------------------------
-// CORS: permitir cualquier origen en entorno de desarrollo
+// CORS: allows any origin in development environment
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCorsPolicy", policy =>
@@ -110,7 +116,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); // <--- importante: auth antes de authorization
+app.UseAuthentication(); // <--- important: auth before of authorization
 app.UseAuthorization();
 
 app.MapControllers();

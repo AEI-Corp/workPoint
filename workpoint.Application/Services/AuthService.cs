@@ -22,7 +22,7 @@ public class AuthService : IAuthServices
 
     
     // Duraciones configurables
-    private readonly int _jwtMinutes = 20;
+    private readonly int _jwtMinutes = 60;
     private readonly int _refreshTokenDays = 7;
     
     

@@ -17,13 +17,6 @@ public class AppDbContext : DbContext
             .IsUnique();
             user.HasIndex(u => u.NumDocument)
             .IsUnique();
-            
-            // To have a list of photos in Branches:
-            modelBuilder.Entity<Branch>()
-                .HasMany(b => b.Photos)
-                .WithOne(i => i.Branch)
-                .HasForeignKey(i => i.BranchId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             // To have a list of photos in Spaces:
             modelBuilder.Entity<Space>()
