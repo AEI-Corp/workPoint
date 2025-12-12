@@ -1,40 +1,36 @@
 name: Deploy Backend
-
-on: 
+on:
   push:
     branches: [main, develop]
-
-permissions: 
+permissions:
   packages: write
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Obtener código
         uses: actions/checkout@v3
-      
+
       - name: Login en GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Construir y subir Backend
         run: |
           echo " Construyendo Backend..."
-
           REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-
-          cd workPoint/
-
+          
+          # CORRECCIÓN: Cambiado de 'workPoint/' a 'workpoint.Api/'
+          cd workpoint.Api/ 
+          
           docker build -t ghcr.io/$REPO_NAME_LC/backend:latest .
           docker push ghcr.io/$REPO_NAME_LC/backend:latest
-
           echo " Backend listo"
-
+          
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -48,23 +44,17 @@ jobs:
           port: 22
           script: |
             echo " Desplegando Backend..."
-
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
             REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-
             docker pull ghcr.io/$REPO_NAME_LC/backend:latest
-
             docker network create workpoint-net || true
             docker stop api-backend || true
             docker rm api-backend || true
-
             docker run -d \
               --name api-backend \
               --restart unless-stopped \
               --network workpoint-net \
               -p 5001:8080 \
               ghcr.io/$REPO_NAME_LC/backend:latest
-
             docker image prune -f
             echo " Backend desplegado en puerto 5001"
