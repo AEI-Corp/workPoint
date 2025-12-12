@@ -21,16 +21,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Construir y subir Backend
         run: |
           echo " Construyendo Backend..."
 
-          # Nombre minúsculas
           REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
 
-          # Entrar al proyecto donde está el Dockerfile
-          cd workpoint/
+          cd workPoint/
 
           docker build -t ghcr.io/$REPO_NAME_LC/backend:latest .
           docker push ghcr.io/$REPO_NAME_LC/backend:latest
@@ -52,12 +50,12 @@ jobs:
             echo " Desplegando Backend..."
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
             REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
 
             docker pull ghcr.io/$REPO_NAME_LC/backend:latest
 
             docker network create workpoint-net || true
-
             docker stop api-backend || true
             docker rm api-backend || true
 
@@ -69,5 +67,4 @@ jobs:
               ghcr.io/$REPO_NAME_LC/backend:latest
 
             docker image prune -f
-
             echo " Backend desplegado en puerto 5001"
