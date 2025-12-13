@@ -28,9 +28,6 @@ public class PhotosController : ControllerBase
         return Ok(photos ?? Enumerable.Empty<PhotoResponseDto>().ToList()); 
     }
 
-    /// <summary>
-    /// Agrega una nueva foto para un espacio. Recibe la imagen como IFormFile.
-    /// </summary>
     [HttpPost("create")]
     public async Task<IActionResult> AddPhoto([FromForm] PhotoUploadFormDto photoForm)
     {
@@ -39,28 +36,22 @@ public class PhotosController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        // Convertimos IFormFile a Stream para pasarlo al servicio.
-        // Usamos 'using' para asegurar que el Stream se desecha correctamente.
-        using var photoStream = photoForm.Photo.OpenReadStream();
-        
+        // Ya no necesitas el using ni convertir a Stream
         var photoDto = new PhotoAddDto
         {
-            Photo = photoStream,
+            Photo = photoForm.Photo,  // Pasar directamente el IFormFile
             SpaceId = photoForm.SpaceId
         };
-        
+    
         try
         {
-            
             var addedPhoto = await _photoService.AddPhotoAsync(photoDto);
 
             if (addedPhoto == null)
             {
-                // 409 Conflict: Máximo de fotos alcanzado (lógica de MaxQty)
                 return Conflict(new { message = "Se ha alcanzado la cantidad máxima de fotos permitidas para este espacio." });
             }
 
-            // 201 Created. Usamos GetAll como referencia.
             return CreatedAtAction(nameof(GetAll), new { id = addedPhoto.Id }, addedPhoto);
         }
         catch (ArgumentNullException ex)
@@ -69,7 +60,6 @@ public class PhotosController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            // Error en la subida a Cloudinary
             return BadRequest(new { message = ex.Message }); 
         }
     }

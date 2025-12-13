@@ -20,9 +20,12 @@ public class CloudinaryService : ICloudinaryService
 
     private Cloudinary connectCloudinaryEnviroment()
     {
-        var cloudName = Environment.GetEnvironmentVariable("") ?? _config["Cloudinary:Cloud_Name"];
-        var apiKey = Environment.GetEnvironmentVariable("") ?? _config["Cloudinary:Api_Key"];
-        var apiSecret = Environment.GetEnvironmentVariable("") ?? _config["Cloudinary:Api_Secrets"];
+       var cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME") 
+                        ?? _config["Cloudinary:Cloud_Name"];
+        var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY") 
+                     ?? _config["Cloudinary:Api_Key"];
+        var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET") 
+                        ?? _config["Cloudinary:Api_Secret"];
         
         if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret)) 
             throw new ArgumentNullException("Cloudinary connection without any parameter");
@@ -37,7 +40,8 @@ public class CloudinaryService : ICloudinaryService
 
         var uploadparams = new ImageUploadParams()
         {
-            File = new FileDescription(null, entityDto.Photo),
+            // Ahora SÍ tienes el nombre del archivo disponible
+            File = new FileDescription(entityDto.Photo.FileName, entityDto.Photo.OpenReadStream()),
             Folder = entityDto.SpaceId != null ? $"workpoint/spaces/{entityDto.SpaceId}" : "workpoint/general"
         };
 

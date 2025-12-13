@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace workpoint.Application.DTOs;
 
 public class PhotoResponseDto
@@ -13,6 +15,6 @@ public class PhotoResponseDto
 
 public class PhotoAddDto
 {
-    public Stream Photo { get; set; }
+    public IFormFile Photo { get; set; }  // Cambiar de Stream a IFormFile
     public int? SpaceId { get; set; }
 }
