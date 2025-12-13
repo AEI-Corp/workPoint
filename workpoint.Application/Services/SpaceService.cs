@@ -20,17 +20,17 @@ public class SpaceService : ISpaceService
 
     // ------------------------------------------------------
     
-    // GET ALL:
-    public async Task<IEnumerable<Space>> GetAllAsync()
+    public async Task<IEnumerable<ResponseSpaceDto>> GetAllAsync()
     {
-        return await _spaceRepository.GetAllAsync();
+        var spaces = await _spaceRepository.GetAllAsync();
+        return _mapper.Map<IEnumerable<ResponseSpaceDto>>(spaces);
     }
 
     
-    // GET BY ID:
-    public async Task<Space?> GetByIdAsync(int id)
+    public async Task<ResponseSpaceDto?> GetByIdAsync(int id)
     {
-        return await _spaceRepository.GetByIdAsync(id);
+        var space = await _spaceRepository.GetByIdAsync(id);
+        return _mapper.Map<ResponseSpaceDto>(space);
     }
 
     

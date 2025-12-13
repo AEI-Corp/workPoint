@@ -16,17 +16,20 @@ public class SpaceRepository : IRepository<Space>
     
     // -----------------------------------------------
     
-    // GET ALL:
+    // GET ALL
     public async Task<IEnumerable<Space>> GetAllAsync()
     {
-        return await _context.Spaces.ToListAsync();
+        return await _context.Spaces
+            .Include(s => s.Photos)  // <- Carga las fotos
+            .ToListAsync();
     }
 
-    
-    // GET BY ID:
+    // GET BY ID 
     public async Task<Space> GetByIdAsync(int id)
     {
-        return await _context.Spaces.FindAsync(id);
+        return await _context.Spaces
+            .Include(s => s.Photos)  // <- Carga las fotos
+            .FirstOrDefaultAsync(s => s.Id == id);
     }
 
     
