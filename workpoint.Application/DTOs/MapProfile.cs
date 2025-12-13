@@ -16,6 +16,10 @@ public class MapProfile : Profile
         CreateMap<UserAuthResponseDto, User>();
         CreateMap<User, UserAuthResponseDto>();
 
+        // Mapeo de Photo
+        CreateMap<Photo, PhotoResponseDto>();
+        CreateMap<PhotoResponseDto, Photo>();
+        
         CreateMap<SpaceCreateDto, Space>();
         CreateMap<Space, SpaceCreateDto>();
         CreateMap<Space, ResponseSpaceDto>();
