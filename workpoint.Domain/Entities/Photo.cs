@@ -13,5 +13,5 @@ public class Photo
     
     // Relations
     public Space Space { get; set; }
-    public Branch Branch { get; set; }
+    //public Branch Branch { get; set; }
 }
