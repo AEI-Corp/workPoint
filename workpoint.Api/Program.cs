@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using workpoint.Api.Filters;
 using workpoint.Application.Interfaces;
 using workpoint.Application.Service;
 using workpoint.Application.Services;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<IPhotoRepository, PhotoRepository>(); // 1. Repositor
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>(); // 2. Servicio de almacenamiento (Infraestructura)
 builder.Services.AddScoped<IPhotoService, PhotoService>(); // 3. Servicio de negocio (Aplicación)
 
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -52,6 +54,14 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddControllers();
+
+// Global Exception Filter
+builder.Services.AddScoped<GlobalFilterException>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalFilterException>();
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
 // Button of AUTHORIZE
