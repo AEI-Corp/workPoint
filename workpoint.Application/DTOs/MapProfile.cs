@@ -20,9 +20,12 @@ public class MapProfile : Profile
         CreateMap<Photo, PhotoResponseDto>();
         CreateMap<PhotoResponseDto, Photo>();
         
+        // Mapeo de Space
         CreateMap<SpaceCreateDto, Space>();
         CreateMap<Space, SpaceCreateDto>();
         CreateMap<Space, ResponseSpaceDto>();
+        CreateMap<SpaceUpdateDto, Space>();
+        
         CreateMap<CreateBookingDto, Booking>()
             .ForMember(dest => dest.StartHour, opt => opt.MapFrom(src => src.Start))
             .ForMember(dest => dest.EndHour,   opt => opt.MapFrom(src => src.End));
@@ -31,8 +34,5 @@ public class MapProfile : Profile
             .ForMember(dest => dest.SpaceId, opt => opt.MapFrom(src => src.SpaceId ?? 0))
             .ForMember(dest => dest.Start,   opt => opt.MapFrom(src => src.StartHour))
             .ForMember(dest => dest.End,     opt => opt.MapFrom(src => src.EndHour));
-        // CreateMap<ResponseSpaceDto, SpaceCreateDto>();
-        // CreateMap<SpaceCreateDto, ResponseSpaceDto>();
-
     }
 }
