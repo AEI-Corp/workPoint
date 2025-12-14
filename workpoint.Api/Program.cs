@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using workpoint.Api.Filters;
+using workpoint.Api.Middleware;
 using workpoint.Application.Interfaces;
 using workpoint.Application.Service;
 using workpoint.Application.Services;
@@ -55,13 +55,6 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddControllers();
 
-// Global Exception Filter
-builder.Services.AddScoped<GlobalFilterException>();
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<GlobalFilterException>();
-});
-
 builder.Services.AddEndpointsApiExplorer();
 
 // Button of AUTHORIZE
@@ -109,6 +102,10 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Global Exception
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 // ------------------------------------------------------
 //deploy
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Local")
