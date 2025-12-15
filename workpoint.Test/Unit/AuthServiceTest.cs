@@ -28,10 +28,10 @@ public class AuthServiceTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockMapper = new Mock<IMapper>();
 
-        // Configuración NECESARIA para que funcione el JWT (la clave secreta)
+        // Configuration required for the JWT (secret key) to work
         var jwtKey = "EstaClaveDebeSerSuficientementeLargaParaFirmarJWT";
         
-        // Simular que Configuration tiene la clave secreta y otros valores
+        // Simulate that Configuration has the secret key and other values
         var mockJwtKeySection = new Mock<IConfigurationSection>();
         mockJwtKeySection.Setup(x => x.Value).Returns(jwtKey);
         
@@ -40,7 +40,7 @@ public class AuthServiceTests
         _mockConfiguration.Setup(c => c["Jwt:Issuer"]).Returns("workpoint.io");
         _mockConfiguration.Setup(c => c["Jwt:Audience"]).Returns("workpoint.users");
         
-        // Simular que el refresh token dura 7 días
+        // Simulate that the refresh token lasts 7 days
         var mockRefreshTokenDaysSection = new Mock<IConfigurationSection>();
         mockRefreshTokenDaysSection.Setup(x => x.Value).Returns("7");
         _mockConfiguration.Setup(c => c.GetSection("Jwt:RefreshTokenDays")).Returns(mockRefreshTokenDaysSection.Object);
@@ -53,11 +53,11 @@ public class AuthServiceTests
     }
     
     
-    // PRUEBA 1: Registro Exitoso
+    // TEST 1: Successful Registration
     [Fact]
     public async Task RegisterAsync_ShouldReturnUserResponseDto_WhenRegistrationIsSuccessful()
     {
-        // ARRANGE: Preparar datos
+        // ARRANGE: preparing data
         var registerDto = new RegisterDto 
         { 
             Email = "test@example.com", 
@@ -65,87 +65,87 @@ public class AuthServiceTests
             Name = "Test User" 
         };
         
-        // Simular: Nadie en la DB tiene ese correo
+        // Simulate: Nobody in the database has that email address
         _mockRepository
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<User>());
         
-        // Simular: AutoMapper convierte DTO a Entity
+        // Simulate: AutoMapper converts DTO to Entity
         var userEntity = new User { Id = 1, Email = registerDto.Email, Name = registerDto.Name };
         _mockMapper
             .Setup(m => m.Map<User>(registerDto))
             .Returns(userEntity);
         
-        // Simular: La DB guarda al usuario
+        // Simulate: The DB saves the user
         _mockRepository
             .Setup(r => r.CreateAsync(It.IsAny<User>()))
             .Returns<User>(u => Task.FromResult(u)); 
 
-        // Simular: AutoMapper convierte Entity a Response DTO
+        // Simulate: AutoMapper converts Entity to Response DTO
         var expectedResponse = new UserRegisterResponseDto { Id = 1, Email = registerDto.Email, Name = registerDto.Name };
         _mockMapper
             .Setup(m => m.Map<UserRegisterResponseDto>(userEntity))
             .Returns(expectedResponse);
         
-        // ACT: Llamar a la función
+        // ACT: Call the function
         var result = await _authService.RegisterAsync(registerDto);
         
-        // ASSERT: Verificar resultados
+        // ASSERT: Check results
         result.Should().NotBeNull();
         
-        // Verificar: Se llamó a CreateAsync 1 vez
+        // Verify: CreateAsync was called 1 time
         _mockRepository.Verify(r => r.CreateAsync(It.IsAny<User>()), Times.Once);
         
-        // Verificar: El usuario guardado tiene un PasswordHash (se hashea correctamente)
+        // Verify: The saved user has a PasswordHash (hashed correctly)
         _mockRepository.Verify(r => r.CreateAsync(
             It.Is<User>(u => !string.IsNullOrEmpty(u.PasswordHash))), Times.Once);
     }
 
 
-    // PRUEBA 2: Registro Falla porque el usuario ya existe
+    // TEST 2: Registration Fails because the user already exists
     [Fact]
     public async Task RegisterAsync_ShouldThrowArgumentException_WhenUserAlreadyExists()
     {
-        // ARRANGE: Preparar un usuario que ya existe
+        // ARRANGE: Prepare an existing user
         var registerDto = new RegisterDto { Email = "existente@example.com", Password = "Password123" };
         var existingUser = new User { Id = 2, Email = registerDto.Email };
         
-        // Simular: El GetAllAsync devuelve al usuario existente
+        // Simular: GetAllAsync returns the existing user
         _mockRepository
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<User> { existingUser });
         
-        // ACT & ASSERT: Verificar que lanza ArgumentException
+        // ACT & ASSERT: Verify that it throws ArgumentException
         await _authService.Invoking(s => s.RegisterAsync(registerDto))
             .Should().ThrowAsync<ArgumentException>()
             .WithMessage($"Ya existe un usuario con este correo {registerDto.Email}");
         
-        // Verificar: El método de guardar NUNCA fue llamado
+        // Verify: The save method was NEVER called
         _mockRepository.Verify(r => r.CreateAsync(It.IsAny<User>()), Times.Never);
     }
     
-    // PRUEBA 3: Login Exitoso
+    // TEST 3: Successful Login
     [Fact]
     public async Task LoginAsync_ShouldReturnAuthResponseDto_WhenCredentialsAreCorrect()
     {
-        // ARRANGE: Preparar credenciales
+        // ARRANGE: Prepare credentials
         var loginDto = new LoginDto { Email = "user@test.com", Password = "CorrectPassword123" };
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(loginDto.Password);
         
         var userEntity = new User { Id = 1, Email = loginDto.Email, PasswordHash = hashedPassword };
 
-        // Simular: El repositorio encuentra al usuario
+        // Simulate: The repository finds the user
         _mockRepository
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<User> { userEntity });
         
-        // Simular: La respuesta que se mapearía
+        // Simulate: The response that would be mapped
         var expectedResponse = new UserAuthResponseDto { Token = "fake.jwt.token", RefreshToken = "fake_refresh_token" };
         _mockMapper
             .Setup(m => m.Map<UserAuthResponseDto>(It.IsAny<User>()))
             .Returns(expectedResponse);
 
-        // Simular: La DB guarda el nuevo refresh token (Corrige el error CS1503 si UpdateAsync es 'void')
+        // Simulate: The DB saves the new refresh token (Corrects error CS1503 if UpdateAsync is 'void')
         _mockRepository
             .Setup(r => r.UpdateAsync(It.IsAny<User>()))
             .ReturnsAsync((User u) => u);
@@ -156,17 +156,17 @@ public class AuthServiceTests
         // ASSERT
         result.Should().NotBeNull();
         
-        // Verificar: Se llamó a UpdateAsync 1 vez para guardar el Refresh Token
+        // Verification: UpdateAsync was called once to save the Refresh Token
         _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<User>()), Times.Once);
     }
     
-    // PRUEBA 4: Login Falla por credenciales malas
+    // TEST 4: Login Fails due to bad credentials
     [Theory]
     [InlineData("nonexistent@test.com", "anypassword")] 
     [InlineData("user@test.com", "WrongPassword123")] 
     public async Task LoginAsync_ShouldThrowSecurityException_WhenCredentialsAreIncorrect(string email, string password)
     {
-        // ARRANGE: Preparar DTO con datos malos
+        // ARRANGE: Prepare DTO with bad data
         var loginDto = new LoginDto { Email = email, Password = password };
         var existingUser = new User 
         { 
@@ -174,21 +174,21 @@ public class AuthServiceTests
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword123")
         };
 
-        // Simular: El repositorio tiene el usuario correcto (pero el loginDto no lo es)
+        // Simulate: The repository has the correct user (but the loginDto is not)
         _mockRepository
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<User> { existingUser });
         
-        // ACT & ASSERT: Esperar SecurityException
+        // ACT & ASSERT: Waiting SecurityException
         await _authService.Invoking(s => s.LoginAsync(loginDto))
             .Should().ThrowAsync<SecurityException>()
             .WithMessage("Credenciales incorrectas");
 
-        // Verificar: No se actualizó la DB
+        // Check: The database was not updated
         _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<User>()), Times.Never);
     }
 
-    // PRUEBA 5: Revoke Exitoso
+    // TEST 5: Successful Revoke
     [Fact]
     public async Task RevokeAsync_ShouldReturnTrueAndClearToken_WhenUserExists()
     {
@@ -202,12 +202,12 @@ public class AuthServiceTests
             RefreshTokenExpire = DateTime.UtcNow.AddDays(7)
         };
 
-        // Simular: El repositorio encuentra al usuario
+        // Simulate: The repository finds the user
         _mockRepository
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<User> { userWithToken });
         
-        // Simular: La DB guarda la actualización
+        // Simulate: The DB saves the update
         _mockRepository
             .Setup(r => r.UpdateAsync(It.IsAny<User>()))
             .ReturnsAsync((User u) => u);
@@ -218,19 +218,19 @@ public class AuthServiceTests
         // ASSERT
         result.Should().BeTrue();
         
-        // Verificar: Se llamó a UpdateAsync con el RefreshToken = null
+        //Verify: UpdateAsync was called with RefreshToken = null
         _mockRepository.Verify(r => r.UpdateAsync(
             It.Is<User>(u => u.RefreshToken == null && u.RefreshTokenExpire <= DateTime.UtcNow)), Times.Once);
     }
 
-    // PRUEBA 6: Revoke Falla cuando el usuario no existe
+    //TEST 6: Revoke Fails when user does not exist
     [Fact]
     public async Task RevokeAsync_ShouldReturnFalse_WhenUserDoesNotExist()
     {
         // ARRANGE
         var revokeDto = new RevokeTokenDto { Email = "nonexistent@test.com" };
         
-        // Simular: El repositorio devuelve una lista vacía
+        // Simulate: The repository returns an empty list
         _mockRepository
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<User>());
@@ -241,16 +241,16 @@ public class AuthServiceTests
         // ASSERT
         result.Should().BeFalse();
         
-        // Verificar: NUNCA se llama a la actualización
+        // Verify: The update is NEVER called
         _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<User>()), Times.Never);
     }
 
-    // PRUEBA 7: Revoke Falla cuando el DTO es nulo o vacío
+    // TEST 7: Revoke Fails when the DTO is null or empty
     [Fact]
     public async Task RevokeAsync_ShouldThrowArgumentException_WhenDtoIsInvalid()
     {
         // ARRANGE
-        // Uso de string.Empty en lugar de null para evitar la advertencia CS8625
+        // Using string.Empty instead of null to avoid the CS8625 warning
         var invalidDto = new RevokeTokenDto { Email = string.Empty }; 
         
         // ACT & ASSERT
@@ -258,7 +258,7 @@ public class AuthServiceTests
             .Should().ThrowAsync<ArgumentException>()
             .WithMessage("Email es requerido.");
 
-        // Verificar que la búsqueda nunca fue llamada
+        // Verify that the search was never called
         _mockRepository.Verify(r => r.GetAllAsync(), Times.Never);
     }
 }
