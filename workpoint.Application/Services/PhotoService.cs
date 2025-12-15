@@ -11,7 +11,7 @@ public class PhotoService : IPhotoService
 {
     private readonly IPhotoRepository _photoRepository; 
     private readonly IMapper _mapper;
-    private readonly ICloudinaryService _cloudinaryService; // <- Ahora inyectamos CloudinaryService
+    private readonly ICloudinaryService _cloudinaryService; // <- Now we inject CloudinaryService
 
     public PhotoService(IPhotoRepository photoRepository, IMapper mapper, ICloudinaryService cloudinaryService)
     {
@@ -33,22 +33,22 @@ public class PhotoService : IPhotoService
         if (photoDto == null)
             throw new ArgumentNullException(nameof(photoDto), "El DTO de la foto no puede ser nulo.");
         
-        // 1. Verificar la cantidad máxima de fotos usando el repositorio
-        // Usamos photoDto.spaceId (minúscula) para respetar tu DTO de entrada.
+        // 1. To verify the max amount of photos using the repository.
+        // We use photoDto.spaceId (lower case) to respect the entrance DTO.
         var maxReached = await _photoRepository.MaxQty(photoDto.SpaceId); 
         if (maxReached)
         {
             return null; 
         }
 
-        // 2. Subir la imagen y obtener la URL (Usando ICloudinaryService)
+        // 2. Uploading images and obtain the url (using ICloudinaryService)
         var uploadDto = new UploadPhotoDto
         {
             Photo = photoDto.Photo,
-            SpaceId = photoDto.SpaceId // Usar SpaceId
+            SpaceId = photoDto.SpaceId // To use SpaceId
         };
         
-        // 
+        
         var urlImage = await _cloudinaryService.UploadPhotoAsync(uploadDto);
 
         if (string.IsNullOrEmpty(urlImage))
@@ -56,7 +56,7 @@ public class PhotoService : IPhotoService
             throw new InvalidOperationException("No se pudo subir la imagen a Cloudinary."); 
         }
 
-        // 3. Crear la entidad y guardar en la base de datos
+        // 3. Creating the entity and save on the database.
         var newPhoto = new Photo
         {
             SpaceId = photoDto.SpaceId,
@@ -70,8 +70,8 @@ public class PhotoService : IPhotoService
 
         if (addedPhoto == null) 
         {
-            // Opcional: Si la adición falla después de la subida, se recomienda
-            // implementar una lógica para eliminar la foto de Cloudinary (rollback).
+            // Optional: If the addition fails after uploading, it is recommended
+            // to implement a logic to delete the picture of Cloudinary (rollback).
             return null;
         }
 
@@ -85,11 +85,11 @@ public class PhotoService : IPhotoService
 
     public async Task<bool> RemovePhotoAsync(int id)
     {
-        // Lógica de eliminación en DB
+        // Logic to delete on DB
         var removed = await _photoRepository.RemoveAsync(id);
         
-        // Opcional: Podrías buscar la URL de la foto antes de eliminarla de DB
-        // y llamar a un método de CloudinaryService para eliminar el recurso.
+        // Optional: You could search the picture url before that delete its from DB
+        // and call a CloudinaryService method for deleting the resource.
         
         return removed;
     }

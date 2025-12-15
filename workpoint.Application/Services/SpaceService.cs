@@ -55,16 +55,6 @@ public class SpaceService : ISpaceService
         if (spaceDto.MaxCapacity <= 0)
             throw new ArgumentNullException("La capacidad debe ser mayor a cero.");
         
-        // TODO:
-        // Validations: exists in DB:
-        // var branches = await _branchRepository.GetAllAsync();
-        // if (!branches.Any(b => b.Id == spaceDto.BranchId))
-        //     throw new ArgumentException($"El Branch con Id={spaceDto.BranchId} no existe.");
-        //
-        // var categories = await _categoryRepository.GetAllAsync();
-        // if (!categories.Any(c => c.Id == spaceDto.CategorieId))
-        //     throw new ArgumentException($"La categoría con Id={spaceDto.CategorieId} no existe.");
-        
         var space = _mapper.Map<Space>(spaceDto);
         space.CreatedAt = DateTime.UtcNow;
         space.UpdatedAt = DateTime.UtcNow;
