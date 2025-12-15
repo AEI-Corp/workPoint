@@ -21,7 +21,7 @@ public class AuthService : IAuthServices
     private readonly IMapper _mapper;
 
     
-    // Duraciones configurables
+    // Configurable durations:
     private readonly int _jwtMinutes = 60;
     private readonly int _refreshTokenDays = 7;
     
@@ -63,7 +63,7 @@ public class AuthService : IAuthServices
         if (exist == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, exist.PasswordHash))
             throw new SecurityException("Credenciales incorrectas");
 
-        // Genera token + refresh y guarda el refresh en DB
+        // Make a token + refresh and saves the refresh on the DB
         return await GenerateTokensAsync(exist);
     }
 
@@ -74,9 +74,9 @@ public class AuthService : IAuthServices
             string.IsNullOrEmpty(refreshDto.RefreshToken))
             throw new ArgumentException("Token y refreshToken son requeridos.");
         
-        // 1) Obtener claims aun cuando el token esté expirado.
+        // 1) Obtaining claims even when token has expired.
         var principal = getPrincipalFromExpireToken(refreshDto.Token);
-        // TODO: 
+        
         var userIdClaim = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         
         if (!int.TryParse(userIdClaim, out var userId))
@@ -86,11 +86,11 @@ public class AuthService : IAuthServices
         if (user == null)
             throw new SecurityException("Usuario no encontrado");
 
-        // 2) Verificar que el refresh token coincide y no esté expirado
+        // 2) To verify that refresh token being the same and has not expired.
         if (user.RefreshToken != refreshDto.RefreshToken || user.RefreshTokenExpire <= DateTime.UtcNow)
             throw new SecurityException("Refresh token invalido o expirado");
 
-        // 3) Generar nuevos tokens y guardar el nuevo refresh token
+        // 3) To make new tokens and save the new refresh token
         return await GenerateTokensAsync(user);
     }
 
@@ -121,7 +121,7 @@ public class AuthService : IAuthServices
         // 1. Key
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
         
-        // 2. Algoritmo
+        // 2. Algorithm
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         
         // 3. Claims
@@ -133,7 +133,7 @@ public class AuthService : IAuthServices
             new Claim(ClaimTypes.Email, user.Email)
         };
 
-        // Generamos elJwt
+        // Making Jwt
         return new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],

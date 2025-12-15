@@ -19,15 +19,15 @@ public class WebhookService : IWebhookService
         _logger = logger;
     }
 
-    // Publica el evento a RabbitMQ para procesamiento asíncrono
+    // Publish the event to RabbitMQ for the assyncronym process.
     public async Task SendWebhookAsync(string eventType, object payload)
     {
         try
         {
-            // Serializar el payload
+            // Serialize the payload
             var payloadJson = JsonSerializer.Serialize(payload);
 
-            // Crear mensaje
+            // To create the message:
             var message = new WebhookMessage
             {
                 EventType = eventType,
@@ -35,7 +35,7 @@ public class WebhookService : IWebhookService
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Publicar a RabbitMQ
+            // Publish RabbitMQ
             _messagePublisher.Publish(QueueName, message);
 
             _logger.LogInformation("Evento {EventType} publicado a RabbitMQ", eventType);
