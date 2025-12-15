@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using workpoint.Application.DTOs;
 using workpoint.Application.Interfaces;
 using workpoint.Domain.Entities;
@@ -14,11 +15,19 @@ namespace workpoint.Application.Services
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly IMapper _mapper;
+        private readonly IWebhookService _webhookService; // ← AGREGADO
+        private readonly ILogger<BookingService> _logger; // ← AGREGADO
 
-        public BookingService(IBookingRepository bookingRepository, IMapper mapper)
+        public BookingService(
+            IBookingRepository bookingRepository, 
+            IMapper mapper,
+            IWebhookService webhookService, // ← AGREGADO
+            ILogger<BookingService> logger) // ← AGREGADO
         {
             _bookingRepository = bookingRepository;
             _mapper = mapper;
+            _webhookService = webhookService; // ← AGREGADO
+            _logger = logger; // ← AGREGADO
         }
 
         public async Task<DailyAvailabilityDto> GetDailyAvailabilityAsync(
@@ -26,10 +35,8 @@ namespace workpoint.Application.Services
             DateTime date,
             int slotMinutes)
         {
-           
             var bookings = await _bookingRepository.GetBySpaceAndDateAsync(spaceId, date);
 
-            
             var dayStart = date.Date;
             var dayEnd   = date.Date.AddHours(1);
 
@@ -45,7 +52,6 @@ namespace workpoint.Application.Services
             {
                 var end = start.AddMinutes(slotMinutes);
 
-                // Verificamos si este bloque se cruza con alguna reserva
                 var reserved = bookings.Any(b =>
                     b.StartHour < end &&
                     start < b.EndHour);
@@ -79,6 +85,28 @@ namespace workpoint.Application.Services
 
             await _bookingRepository.AddAsync(booking);
 
+            // PUBLICAR EVENTO A RABBITMQ
+            try
+            {
+                await _webhookService.SendWebhookAsync("booking.created", new
+                {
+                    bookingId = booking.Id,
+                    userId = booking.UserId,
+                    spaceId = booking.SpaceId,
+                    startHour = booking.StartHour,
+                    endHour = booking.EndHour,
+                    available = booking.Available,
+                    createdAt = booking.CreatedAt
+                });
+
+                _logger.LogInformation("Evento booking.created publicado para reserva {BookingId}", booking.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publicando webhook para reserva {BookingId}", booking.Id);
+                // No lanzamos la excepción para no afectar la creación de la reserva
+            }
+
             return booking.Id;
         }
 
@@ -91,12 +119,29 @@ namespace workpoint.Application.Services
             booking.UpdatedAt = DateTime.UtcNow;
 
             await _bookingRepository.UpdateAsync(booking);
+
+            // PUBLICAR EVENTO A RABBITMQ
+            try
+            {
+                await _webhookService.SendWebhookAsync("booking.cancelled", new
+                {
+                    bookingId = booking.Id,
+                    userId = booking.UserId,
+                    spaceId = booking.SpaceId,
+                    cancelledAt = booking.UpdatedAt
+                });
+
+                _logger.LogInformation("Evento booking.cancelled publicado para reserva {BookingId}", booking.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publicando webhook para cancelación de reserva {BookingId}", booking.Id);
+            }
         }
 
         public async Task<List<BookingListItemDto>> GetAllBookingsAsync()
         {
             var bookings = await _bookingRepository.GetAllAsync();
-
             return _mapper.Map<List<BookingListItemDto>>(bookings);
         }
 
@@ -116,7 +161,6 @@ namespace workpoint.Application.Services
             var booking = await _bookingRepository.GetByIdAsync(id)
                           ?? throw new KeyNotFoundException("Reserva no encontrada");
 
-            // Verificar si hay conflicto con otras reservas
             var hasConflict = await _bookingRepository.HasConflictForUpdateAsync(
                 bookingId: id,
                 spaceId: dto.SpaceId,
@@ -126,12 +170,32 @@ namespace workpoint.Application.Services
             if (hasConflict)
                 throw new InvalidOperationException("Ya existe una reserva en ese horario para ese espacio.");
 
-            // Actualizamos
             booking.SpaceId   = dto.SpaceId;
             booking.StartHour = dto.Start;
             booking.EndHour   = dto.End;
             booking.UpdatedAt = DateTime.UtcNow;
 
-            await _bookingRepository.UpdateAsync(booking);        }
+            await _bookingRepository.UpdateAsync(booking);
+
+            // PUBLICAR EVENTO A RABBITMQ
+            try
+            {
+                await _webhookService.SendWebhookAsync("booking.updated", new
+                {
+                    bookingId = booking.Id,
+                    userId = booking.UserId,
+                    spaceId = booking.SpaceId,
+                    startHour = booking.StartHour,
+                    endHour = booking.EndHour,
+                    updatedAt = booking.UpdatedAt
+                });
+
+                _logger.LogInformation("Evento booking.updated publicado para reserva {BookingId}", booking.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publicando webhook para actualización de reserva {BookingId}", booking.Id);
+            }
+        }
     }
 }
