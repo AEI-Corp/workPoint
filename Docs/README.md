@@ -168,3 +168,107 @@ The data model is organized around renting spaces and managing bookings:
 ## Use Case Diagram
 
 <img width="476" height="823" alt="image" src="https://github.com/user-attachments/assets/4680eb1d-3291-458c-b08c-5787b095a27b" />
+
+# WorkPoint Platform (Frontend + API)
+
+## 1. Overview
+
+WorkPoint is a full-stack platform that allows individuals and companies to **publish spaces available for rent** and enables other users to **browse availability and create bookings** to work in those spaces.
+
+The solution is composed of:
+- **Frontend (Web App)** built with Next.js.
+- **Backend (REST API)** built with ASP.NET Core.
+- Both layers are exposed and consumed through an **API Gateway**, which centralizes access and standardizes the communication between the client application and the services.
+
+---
+
+## 2. Production Links
+
+- **Frontend (Production):** https://proyecto-integrador-eight-pi.vercel.app/Home  
+- **Backend API (Swagger / Docs):** https://workpoint-fd50fee8e731.herokuapp.com/index.html  
+- **Backend Deployment Platform:** Heroku  
+
+---
+
+## 3. Platform Architecture
+
+### 3.1 High-Level Architecture (Frontend + Backend)
+
+The platform follows a full-stack architecture where:
+
+- The **Frontend** provides the user interface, navigation, session handling, validation, and user feedback.
+- The **Backend** provides the business logic, domain model, persistence, security, and the REST API surface.
+- An **API Gateway** sits in front of the backend services and provides a single entry point for the frontend.
+
+### 3.2 API Gateway Role (How Both Sides Are Consumed)
+
+Both the frontend application and any external client consume the backend **through an API Gateway**. In practical terms, the API Gateway is responsible for:
+
+- **Single entry point** for client requests (the frontend does not call internal services directly).
+- **Request routing** to the appropriate backend endpoints.
+- **Security enforcement** (centralized authentication/authorization policies when applicable).
+- **Cross-cutting concerns** such as rate limiting, monitoring, and request logging (depending on the gateway configuration).
+- **Abstraction** of internal backend changes, allowing the frontend to keep a stable contract.
+
+> Note: The exact gateway provider/technology is not included in this documentation, but the architectural responsibility remains the same.
+
+---
+
+## 4. User Roles
+
+- **Admin**
+  - Creates and manages spaces.
+  - Manages internal resources such as photos.
+- **User**
+  - Browses the catalog.
+  - Checks availability.
+  - Creates, updates, and cancels bookings.
+
+---
+
+## 5. Frontend Documentation (Web App)
+
+### 5.1 Language
+- **TypeScript**
+
+### 5.2 Frameworks
+- **Next.js (App Router + Turbopack)**
+- **React**
+
+### 5.3 Libraries and Tooling
+- **Tailwind CSS** (styling)
+- **NextAuth.js** (authentication and sessions)
+- **Prisma ORM** (typed models and data access)
+- **Cloudinary** (image management and optimization)
+- **MercadoPago SDK** (payments integration)
+- **Yup** (form validation)
+- **React Toastify** (notifications)
+- **PostCSS + Autoprefixer** (CSS processing)
+- **ESLint** (code quality)
+
+### 5.4 Backend Integration
+- The frontend performs requests to the WorkPoint backend for business operations **through the API Gateway**.
+- Payments are handled via **MercadoPago** according to the provided scope.
+
+### 5.5 Main Module
+- **Space Creation (Admin)**:
+  - Space creation forms with validation.
+  - Optional image handling (Cloudinary).
+  - Submission to the backend through the API Gateway.
+  - User feedback via notifications.
+
+### 5.6 Next.js Template Reference (Kept as in the original repository)
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+#### Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
