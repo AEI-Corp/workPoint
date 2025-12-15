@@ -67,11 +67,10 @@ jobs:
               -e CloudinarySettings__CloudName="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
               -e CloudinarySettings__ApiKey="${{ secrets.CLOUDINARY_API_KEY }}" \
               -e CloudinarySettings__ApiSecret="${{ secrets.CLOUDINARY_API_SECRET }}" \
-              -e RabbitMQ__HostName="${{ secrets.RABBITMQ_HOST }}" \
-              -e RabbitMQ__Port="${{ secrets.RABBITMQ_PORT }}" \
-              -e RabbitMQ__UserName="${{ secrets.RABBITMQ_USER }}" \
-              -e RabbitMQ__Password="${{ secrets.RABBITMQ_PASS }}" \
-              -e RabbitMQ__QueueName="${{ secrets.RABBITMQ_QUEUE }}" \
+              -e RabbitMQ__Host="rabbitmq" \
+              -e RabbitMQ__Port="5672" \
+              -e RabbitMQ__Username="guest" \
+              -e RabbitMQ__Password="guest" \
               ghcr.io/$REPO_NAME_LC/backend:latest
 
             docker image prune -f
