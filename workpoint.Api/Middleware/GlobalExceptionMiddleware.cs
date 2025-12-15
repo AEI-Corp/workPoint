@@ -31,7 +31,7 @@ public class GlobalExceptionMiddleware
         {
             _logger.LogError(exception, "Excepción no manejada capturada en middleware");
             
-            // 🔥 ENVIAR WEBHOOK DE ERROR
+            // Send a webhook of error
             await SendErrorWebhookAsync(context, exception);
             
             await HandleExceptionAsync(context, exception);
@@ -42,11 +42,11 @@ public class GlobalExceptionMiddleware
     {
         try
         {
-            // Crear scope para resolver servicios scoped
+            // To create an scope for solving scoped services.
             using var scope = _serviceProvider.CreateScope();
             var webhookService = scope.ServiceProvider.GetRequiredService<IWebhookService>();
 
-            // Determinar el tipo de error
+            // To determine erros types.
             var errorType = exception switch
             {
                 ArgumentNullException => "validation.failed",
@@ -56,7 +56,7 @@ public class GlobalExceptionMiddleware
                 _ => "error.occurred"
             };
 
-            // Crear payload del error
+            // To create error payload
             var errorPayload = new
             {
                 errorType = exception.GetType().Name,
@@ -64,7 +64,7 @@ public class GlobalExceptionMiddleware
                 statusCode = GetStatusCode(exception),
                 endpoint = $"{context.Request.Method} {context.Request.Path}",
                 timestamp = DateTime.UtcNow,
-                // Solo incluir stack trace en Development
+                // Just including stack trace in Development
                 stackTrace = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" 
                     ? exception.StackTrace 
                     : null,
@@ -72,14 +72,14 @@ public class GlobalExceptionMiddleware
                 ipAddress = context.Connection.RemoteIpAddress?.ToString()
             };
 
-            // Publicar webhook
+            // Publish webhook
             await webhookService.SendWebhookAsync(errorType, errorPayload);
             
             _logger.LogInformation("Webhook de error publicado: {ErrorType}", errorType);
         }
         catch (Exception ex)
         {
-            // No fallar si el webhook falla
+            // Do not fails if the webhook fails
             _logger.LogError(ex, "Error enviando webhook de excepción");
         }
     }

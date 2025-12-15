@@ -55,7 +55,7 @@ public class SpaceController : ControllerBase
             Price = spaceDto.Price,
             Description = spaceDto.Description,
             UserId = spaceDto.UserId,
-            // Photos = spaceDto.Photos,
+            
         };
 
         var createdSpace = await _spaceService.CreateAsync(space);

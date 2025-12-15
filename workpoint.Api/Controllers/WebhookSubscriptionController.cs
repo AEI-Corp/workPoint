@@ -20,7 +20,7 @@ public class WebhookSubscriptionController : ControllerBase
         _logger = logger;
     }
 
-    // Obtener todas las suscripciones
+    // It obtains all suscriptions
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -28,7 +28,7 @@ public class WebhookSubscriptionController : ControllerBase
         return Ok(subscriptions);
     }
 
-    // Obtener una suscripción por ID
+    // It obtains suscriptions by ID
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -40,11 +40,11 @@ public class WebhookSubscriptionController : ControllerBase
         return Ok(subscription);
     }
 
-    // Crear una nueva suscripción
+    // It created a new subscription 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateWebhookDto dto)
     {
-        // Validar el tipo de evento
+        // Validate event type
         var validEventTypes = new[] { "booking.created", "booking.updated", "error.occurred", "validation.failed" };
         
         if (!validEventTypes.Contains(dto.EventType))
@@ -71,7 +71,7 @@ public class WebhookSubscriptionController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
-    // Actualizar una suscripción (activar/desactivar)
+    // Update a subscription (activate/deactivate)
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateWebhookDto dto)
     {
@@ -89,7 +89,7 @@ public class WebhookSubscriptionController : ControllerBase
         return Ok(subscription);
     }
 
-    // Eliminar una suscripción
+    // Delete a subscription
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

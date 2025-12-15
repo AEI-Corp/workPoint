@@ -1,20 +1,20 @@
 namespace workpoint.Domain.Entities;
 
-// Almacena las URLs que recibirán notificaciones de eventos
+// Stores the URLs that will receive event notifications
 public class WebhookSubscription
 {
-    // ID único
+    // ID unique
     public int Id { get; set; }
     
-    // URL que recibirá las notificaciones
+    // URL that receives notifications
     public string Url { get; set; } = string.Empty;
     
-    // Tipo de evento: "booking.created", "booking.updated", "error.occurred"
+    // Event type: "booking.created", "booking.updated", "error.occurred"
     public string EventType { get; set; } = string.Empty;
     
-    // Indica si está activa
+    // Shows if is active.
     public bool IsActive { get; set; } = true;
     
-    // Fecha de creación
+    // Creation date
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
