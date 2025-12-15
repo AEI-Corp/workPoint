@@ -1,75 +1,118 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using workpoint.Api.Filters;
+using workpoint.Api;
+using workpoint.Api.Middleware;
 using workpoint.Application.Interfaces;
 using workpoint.Application.Service;
 using workpoint.Application.Services;
 using workpoint.Domain.Entities;
+using workpoint.Domain.Interfaces;
 using workpoint.Domain.Interfaces.Repositories;
 using workpoint.Infrastructure.Extensions;
+using workpoint.Infrastructure.Messaging;
 using workpoint.Infrastructure.Repositories;
 using workpoint.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<IBookingService, BookingService>();
+// ---------------- SERVICES ----------------
 
+// Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration);
-
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Repositories and Services
+// Booking
+builder.Services.AddScoped<IBookingService, BookingService>();
+
+// Auth / Users
 builder.Services.AddScoped<IRepository<User>, UserRepository>();
 builder.Services.AddScoped<IAuthServices, AuthService>();
 
-// Spaces:
+// Spaces
 builder.Services.AddScoped<IRepository<Space>, SpaceRepository>();
 builder.Services.AddScoped<ISpaceService, SpaceService>();
 
-// Photos:
-builder.Services.AddScoped<IPhotoRepository, PhotoRepository>(); // 1. Repositorio (Infraestructura)
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>(); // 2. Servicio de almacenamiento (Infraestructura)
-builder.Services.AddScoped<IPhotoService, PhotoService>(); // 3. Servicio de negocio (Aplicación)
+// Photos
+builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IPhotoService, PhotoService>();
 
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
-    });
+// Webhooks y RabbitMQ
+builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+builder.Services.AddScoped<IWebhookSubscriptionRepository, WebhookSubscriptionRepository>();
+builder.Services.AddScoped<IWebhookService, WebhookService>();
+builder.Services.AddHttpClient();
 
-builder.Services.AddControllers();
+// Consumer de webhooks (background service)
+builder.Services.AddHostedService<WebhookConsumer>();
 
-// Global Exception Filter
-builder.Services.AddScoped<GlobalFilterException>();
-builder.Services.AddControllers(options =>
+// --------- VALIDATION ERRORS (400) → WEBHOOK ---------
+builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
-    options.Filters.Add<GlobalFilterException>();
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var webhookService = context.HttpContext.RequestServices
+            .GetRequiredService<IWebhookService>();
+
+        var errors = context.ModelState
+            .Where(x => x.Value.Errors.Count > 0)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
+
+        //  Webhook de validación (400)
+        webhookService.SendWebhookAsync("validation.failed", new
+        {
+            statusCode = 400,
+            path = context.HttpContext.Request.Path.Value,
+            method = context.HttpContext.Request.Method,
+            errors,
+            timestamp = DateTime.UtcNow
+        }).GetAwaiter().GetResult();
+
+        return new BadRequestObjectResult(new
+        {
+            type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+            title = "One or more validation errors occurred.",
+            status = 400,
+            errors
+        });
+    };
 });
 
+// Authentication JWT
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
+
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Button of AUTHORIZE
+// Swagger + JWT
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "WorkPoint API", Version = "v1" });
 
-    // Set autorización with JWT
     c.AddSecurityDefinition("Bearer", new()
     {
         Name = "Authorization",
@@ -77,7 +120,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Ingrese su token JWT en el campo. Ejemplo: Bearer eyJhbGci..."
+        Description = "Ingrese su token JWT. Ejemplo: Bearer eyJhbGci..."
     });
 
     c.AddSecurityRequirement(new()
@@ -96,46 +139,38 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// -------------------------------------------------------------------
-// CORS: allows any origin in development environment
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCorsPolicy", policy =>
     {
         policy.AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
-// ------------------------------------------------------
-//deploy
+
+// ------------- MIDDLEWARE PIPELINE -------------
+
+//  500 → Webhook
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Local")
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Product Catalog API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WorkPoint API v1");
         c.RoutePrefix = string.Empty;
     });
-}
 
-// Middlewares
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    
-    app.UseCors("DevCorsPolicy"); // CORS
+    app.UseCors("DevCorsPolicy");
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication(); // <--- important: auth before of authorization
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
-

@@ -47,5 +47,6 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<Space> Spaces { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<WebhookSubscription> WebhookSubscriptions { get; set; }
     
 }
