@@ -2,9 +2,7 @@ name: Deploy Backend
 
 on:
   push:
-    branches:
-      - develop
-      - main
+    branches: [develop]
 
 permissions:
   contents: read
@@ -12,55 +10,42 @@ permissions:
 
 jobs:
   build:
-    name: Build & Push Backend Image
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Login a GHCR
+      - name: Login GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build y Push imagen Backend
+      - name: Build & Push Backend
         run: |
-          echo "Construyendo Backend..."
-
           REPO_NAME_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-
-          docker build -t ghcr.io/$REPO_NAME_LC/backend:latest \
-            -f workpoint.Api/Dockerfile \
-            .
-
+          docker build -t ghcr.io/$REPO_NAME_LC/backend:latest -f workpoint.Api/Dockerfile .
           docker push ghcr.io/$REPO_NAME_LC/backend:latest
 
-          echo "Imagen Backend subida correctamente"
-
   deploy:
-    name: Deploy Backend en VPS
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Instalar SSH Key
+      - name: Setup SSH
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SERVER_SSH_KEY }}
-          known_hosts: placeholder
+          known_hosts: 'placeholder'
 
-      - name: Agregar VPS a known_hosts
+      - name: Add Known Hosts
         run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Desplegar Backend en VPS
+      - name: Deploy to VPS
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
 
-            echo "Desplegando Backend..."
+            echo "🚀 Desplegando Backend..."
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
@@ -69,9 +54,7 @@ jobs:
             docker pull ghcr.io/$REPO_NAME_LC/backend:latest
 
             docker network create workpoint-net || true
-
-            docker stop api-backend || true
-            docker rm api-backend || true
+            docker rm -f api-backend || true
 
             docker run -d \
               --name api-backend \
@@ -92,7 +75,5 @@ jobs:
               ghcr.io/$REPO_NAME_LC/backend:latest
 
             docker image prune -f
-
-            echo "Backend desplegado correctamente"
+            echo "✅ Backend desplegado correctamente"
           EOF
-
