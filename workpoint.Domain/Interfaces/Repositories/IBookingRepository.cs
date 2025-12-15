@@ -10,7 +10,7 @@ namespace workpoint.Domain.Interfaces.Repositories
         Task<List<Booking>> GetBySpaceAndDateAsync(int spaceId, DateTime date);
         Task<bool> HasConflictAsync(int spaceId, DateTime start, DateTime end);
 
-        // crud que usa el service
+        // crud that uses service
         Task AddAsync(Booking booking);
         Task UpdateAsync(Booking booking);
         Task<Booking?> GetByIdAsync(int id);

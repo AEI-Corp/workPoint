@@ -25,7 +25,7 @@ public class AuthController : ControllerBase
         if (result == null)
             return Unauthorized("Credenciales incorrectas.");
 
-        return Ok(result); // <-- Debe devolver UserAuthResponseDto
+        return Ok(result); // <-- Should return UserAuthResponseDto
     }
     
     
@@ -37,7 +37,7 @@ public class AuthController : ControllerBase
         if (result == null)
             return BadRequest("No se pudo registrar el usuario.");
 
-        return Ok(result); // <-- Debe devolver UserRegisterResponseDto
+        return Ok(result); // <-- Should return UserRegisterResponseDto
     }
 
     
@@ -50,7 +50,7 @@ public class AuthController : ControllerBase
         if (result == null)
             return Unauthorized("Refresh Token inválido.");
 
-        return Ok(result); // <-- Debe devolver UserAuthResponseDto de nuevo
+        return Ok(result); // <-- Should return UserAuthResponseDto again
     }
 
     
