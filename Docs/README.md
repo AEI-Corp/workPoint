@@ -1,62 +1,62 @@
 # WorkPoint API
 
-## Descripción
+## Description
 
-WorkPoint es una plataforma que permite a personas y empresas **publicar espacios disponibles para alquiler** y a su vez permite que otras personas o empresas **consulten disponibilidad y realicen reservas** para trabajar.
+WorkPoint is a platform that allows individuals and companies to **publish spaces available for rent**, and also allows other individuals or companies to **check availability and create bookings** for work purposes.
 
-El sistema contempla dos roles principales:
-- **Admin**: administra y publica espacios y gestiona recursos internos (por ejemplo, fotos).
-- **User**: consume el catálogo, consulta disponibilidad y crea/cancela reservas.
-
----
-
-## Enlaces del sistema (despliegue)
-
-- **Frontend (producción):** https://proyecto-integrador-eight-pi.vercel.app/Home
-- **API (Swagger / documentación):** https://workpoint-fd50fee8e731.herokuapp.com/index.html
-- **Plataforma de despliegue (API):** Heroku
+The system includes two main roles:
+- **Admin**: manages and publishes spaces and manages internal resources (for example, photos).
+- **User**: browses the catalog, checks availability, and creates/cancels bookings.
 
 ---
 
-## Arquitectura
+## System Links (Deployment)
 
-Este proyecto está construido con **Arquitectura en Capas** siguiendo principios de **Clean Architecture** con una filosofía **DDD (Domain-Driven Design)**. La solución separa responsabilidades por proyectos, manteniendo reglas de dependencia claras: las capas internas no dependen de las externas.
+- **Frontend (Production):** https://proyecto-integrador-eight-pi.vercel.app/Home
+- **API (Swagger / Documentation):** https://workpoint-fd50fee8e731.herokuapp.com/index.html
+- **Deployment Platform (API):** Heroku
 
-### Estructura de la solución
+---
+
+## Architecture
+
+This project is built using a **Layered Architecture** following **Clean Architecture** principles with a **DDD (Domain-Driven Design)** philosophy. The solution separates responsibilities by projects, enforcing clear dependency rules: inner layers do not depend on outer layers.
+
+### Solution Structure
 
 - **workpoint.Api**
-  - Capa de presentación (ASP.NET Core Web API).
-  - Controllers, Middleware, configuración (Program.cs, appsettings) y Dockerfile.
-  - Expone endpoints HTTP y aplica autenticación/autorización.
+  - Presentation layer (ASP.NET Core Web API).
+  - Controllers, Middleware, configuration (Program.cs, appsettings) and Dockerfile.
+  - Exposes HTTP endpoints and applies authentication/authorization.
 
 - **workpoint.Application**
-  - Capa de aplicación (casos de uso).
-  - DTOs, Interfaces, Services y Messages.
-  - Coordina la lógica por casos de uso y define contratos hacia Infrastructure.
+  - Application layer (use cases).
+  - DTOs, Interfaces, Services, and Messages.
+  - Coordinates business logic per use case and defines contracts toward Infrastructure.
 
 - **workpoint.Domain**
-  - Capa de dominio (núcleo).
-  - Entities e Interfaces.
-  - Modelo del negocio y reglas del dominio. No depende de frameworks externos.
+  - Domain layer (core).
+  - Entities and Interfaces.
+  - Business model and domain rules. Does not depend on external frameworks.
 
 - **workpoint.Infrastructure**
-  - Capa de infraestructura.
-  - Data, Repositories, Services, Messaging y Extensions.
-  - Persistencia con EF Core + MySQL e integraciones externas (por ejemplo, Cloudinary).
+  - Infrastructure layer.
+  - Data, Repositories, Services, Messaging, and Extensions.
+  - Persistence with EF Core + MySQL and external integrations (for example, Cloudinary).
 
 - **workpoint.Test**
-  - Proyecto de pruebas.
+  - Test project.
 
-### Regla de dependencias
+### Dependency Rule
 
-- `Domain` no depende de ninguna otra capa.
-- `Application` depende de `Domain`.
-- `Infrastructure` depende de `Application` y `Domain`.
-- `Api` depende de `Application` e `Infrastructure` (y referencias necesarias a `Domain`).
+- `Domain` does not depend on any other layer.
+- `Application` depends on `Domain`.
+- `Infrastructure` depends on `Application` and `Domain`.
+- `Api` depends on `Application` and `Infrastructure` (and required references to `Domain`).
 
 ---
 
-## Lenguaje
+## Language
 
 - **C#**
 
@@ -71,7 +71,7 @@ Este proyecto está construido con **Arquitectura en Capas** siguiendo principio
 
 ---
 
-## Librerías (NuGet)
+## Libraries (NuGet)
 
 ### workpoint.Api (net9.0)
 - AutoMapper (12.0.1)
@@ -94,7 +94,7 @@ Este proyecto está construido con **Arquitectura en Capas** siguiendo principio
 - System.IdentityModel.Tokens.Jwt (8.15.0)
 
 ### workpoint.Domain (net9.0)
-- Sin paquetes NuGet adicionales.
+- No additional NuGet packages.
 
 ### workpoint.Infrastructure (net9.0)
 - CloudinaryDotNet (1.27.9)
@@ -105,42 +105,42 @@ Este proyecto está construido con **Arquitectura en Capas** siguiendo principio
 
 ---
 
-## Seguridad: autenticación y autorización
+## Security: Authentication and Authorization
 
-La API utiliza **JWT Bearer**.
+The API uses **JWT Bearer**.
 
-Header requerido para endpoints protegidos:
+Required header for protected endpoints:
 `Authorization: Bearer {token}`
 
-### Matriz de permisos (alto nivel)
+### High-Level Permission Matrix
 
-- **Auth**: público (login/register/refresh/revoke según políticas del sistema).
-- **Space**: restringido a **Admin**.
-- **Booking**: **User** puede gestionar el flujo completo (crear/consultar/actualizar/cancelar).
-- **Photos**: restringido a **Admin**.
-- **WebhookSubscription**: no aplica / omitido en esta documentación.
-
----
-
-## Reglas del negocio (reservas y disponibilidad)
-
-- No se permite reservar el **mismo espacio** en el **mismo rango de tiempo** (no se permiten solapamientos).
-- El campo `Available` representa estado/disponibilidad de la reserva.
-- El endpoint de cancelación **no elimina** la reserva: la **marca como cancelada**.
+- **Auth**: public (login/register/refresh/revoke depending on system policies).
+- **Space**: restricted to **Admin**.
+- **Booking**: **User** can manage the complete flow (create/read/update/cancel).
+- **Photos**: restricted to **Admin**.
+- **WebhookSubscription**: not applicable / omitted from this documentation.
 
 ---
 
-## Modelo de datos (resumen)
+## Business Rules (Bookings and Availability)
 
-El modelo está organizado alrededor de alquiler de espacios y gestión de reservas:
+- Booking the **same space** for the **same time range** is not allowed (no overlaps).
+- The `Available` field represents booking state/availability.
+- The cancellation endpoint does **not delete** the booking; it **marks it as canceled**.
 
-- **Users**: información del usuario y autenticación.
-- **Roles**: control de permisos (Admin/User).
-- **Spaces**: espacios publicados para alquiler (relaciona con categoría, sede/sucursal y usuario).
-- **Bookings**: reservas por usuario/espacio con `StartHour` y `EndHour`, además de estado y auditoría.
-- **Photos**: fotografías asociadas a espacios (URL).
-- Catálogos/ubicación: **DocumentsTypes**, **Departments**, **Cities**, **Branches**, **Categories**.
-- El modelo contempla **Payments** y **PaymentMethods** a nivel de base de datos.
+---
+
+## Data Model (Summary)
+
+The data model is organized around renting spaces and managing bookings:
+
+- **Users**: user information and authentication.
+- **Roles**: permission control (Admin/User).
+- **Spaces**: rentable spaces (related to categories, branches/locations, and a user/owner).
+- **Bookings**: reservations per user/space with `StartHour` and `EndHour`, plus status and auditing.
+- **Photos**: photos associated with spaces (URL).
+- Location/catalog entities: **DocumentsTypes**, **Departments**, **Cities**, **Branches**, **Categories**.
+- The model includes **Payments** and **PaymentMethods** at database level.
 
 ---
 
@@ -148,15 +148,23 @@ El modelo está organizado alrededor de alquiler de espacios y gestión de reser
 
 <img width="1813" height="809" alt="image" src="https://github.com/user-attachments/assets/68e5a1da-aeab-4888-a246-254dc39a2f84" />
 <img width="1816" height="763" alt="image" src="https://github.com/user-attachments/assets/4de675c5-9e90-4ae2-8376-f970b616b96f" />
+<img width="1824" height="413" alt="image" src="https://github.com/user-attachments/assets/baa07491-0dfc-42f2-8336-968a91bb0742" />
 
+---
 
-## Estado del proyecto
+## Project Status
 
-- Base de datos: **MySQL**.
-- El sistema se encuentra desplegado en producción; no requiere configuración local para su uso desde el cliente final.
+- Database: **MySQL**.
+- The system is fully deployed in production; it does not require local configuration for end-user access.
 
- ## Diagramas UML y entidad relacion
+---
+
+## UML and Entity-Relationship Diagrams
+
 <img width="1389" height="3471" alt="workPoint drawio" src="https://github.com/user-attachments/assets/dafb7cab-de65-4b55-807b-c1bb97ee6a93" />
 
-## Diagrama caso de uso 
+---
+
+## Use Case Diagram
+
 <img width="476" height="823" alt="image" src="https://github.com/user-attachments/assets/4680eb1d-3291-458c-b08c-5787b095a27b" />
