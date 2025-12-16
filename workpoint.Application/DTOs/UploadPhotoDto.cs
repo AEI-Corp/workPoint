@@ -13,6 +13,6 @@ public class PhotoUploadFormDto
     [Required(ErrorMessage = "El archivo de la foto es requerido.")]
     public IFormFile Photo { get; set; }
     
-    // Usamos el mismo nombre 'SpaceId' que en el DTO del servicio para consistencia
+    // We use the same name 'SpaceId' than in DTO for the service for consistence.
     public int? SpaceId { get; set; }
 }

@@ -15,19 +15,19 @@ namespace workpoint.Application.Services
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly IMapper _mapper;
-        private readonly IWebhookService _webhookService; // ← AGREGADO
-        private readonly ILogger<BookingService> _logger; // ← AGREGADO
+        private readonly IWebhookService _webhookService; // ← Added
+        private readonly ILogger<BookingService> _logger; // ← Added
 
         public BookingService(
             IBookingRepository bookingRepository, 
             IMapper mapper,
-            IWebhookService webhookService, // ← AGREGADO
-            ILogger<BookingService> logger) // ← AGREGADO
+            IWebhookService webhookService, // ← Added
+            ILogger<BookingService> logger) // ← Added
         {
             _bookingRepository = bookingRepository;
             _mapper = mapper;
-            _webhookService = webhookService; // ← AGREGADO
-            _logger = logger; // ← AGREGADO
+            _webhookService = webhookService; // ← Added
+            _logger = logger; // ← Added
         }
 
         public async Task<DailyAvailabilityDto> GetDailyAvailabilityAsync(
@@ -85,7 +85,7 @@ namespace workpoint.Application.Services
 
             await _bookingRepository.AddAsync(booking);
 
-            // PUBLICAR EVENTO A RABBITMQ
+            // Publish event RABBITMQ
             try
             {
                 await _webhookService.SendWebhookAsync("booking.created", new
@@ -104,7 +104,7 @@ namespace workpoint.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error publicando webhook para reserva {BookingId}", booking.Id);
-                // No lanzamos la excepción para no afectar la creación de la reserva
+                // Do not throw exception to do not affect a new booking
             }
 
             return booking.Id;
@@ -120,7 +120,7 @@ namespace workpoint.Application.Services
 
             await _bookingRepository.UpdateAsync(booking);
 
-            // PUBLICAR EVENTO A RABBITMQ
+            // Publish event RABBITMQ
             try
             {
                 await _webhookService.SendWebhookAsync("booking.cancelled", new
@@ -177,7 +177,7 @@ namespace workpoint.Application.Services
 
             await _bookingRepository.UpdateAsync(booking);
 
-            // PUBLICAR EVENTO A RABBITMQ
+            // Publish event RABBITMQ
             try
             {
                 await _webhookService.SendWebhookAsync("booking.updated", new

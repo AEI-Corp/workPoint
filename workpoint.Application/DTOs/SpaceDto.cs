@@ -11,7 +11,7 @@ public class SpaceCreateDto
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
     public int? UserId { get; set; }                    // when an User posts a Space
-    // public ICollection<Photo>? Photos { get; set; }      // List of photos
+    
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; } 
 }

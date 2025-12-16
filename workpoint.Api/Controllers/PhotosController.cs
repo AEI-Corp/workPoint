@@ -16,15 +16,15 @@ public class PhotosController : ControllerBase
         _photoService = photoService;
     }
 
-    /// <summary>
-    /// Obtiene todas las fotos.
-    /// </summary>
+    
+    // Obtains all pictures.
+    
     [HttpGet("getAll")]
     public async Task<ActionResult<List<PhotoResponseDto>>> GetAll()
     {
         var photos = await _photoService.GetAllPhotosAsync();
         
-        // Devolver una lista vacía si es nula, manteniendo el tipo esperado
+        // Return an empty list if null, while maintaining the expected type
         return Ok(photos ?? Enumerable.Empty<PhotoResponseDto>().ToList()); 
     }
 
@@ -36,10 +36,10 @@ public class PhotosController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        // Ya no necesitas el using ni convertir a Stream
+        // We do not need the "using" nor converting to Stream
         var photoDto = new PhotoAddDto
         {
-            Photo = photoForm.Photo,  // Pasar directamente el IFormFile
+            Photo = photoForm.Photo,  // It passes IFormFile directly
             SpaceId = photoForm.SpaceId
         };
     
@@ -64,9 +64,9 @@ public class PhotosController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Cambia el estado (activo/inactivo) de una foto por Id.
-    /// </summary>
+    
+    // It changes the status (active/disabled) of a picture by Id.
+    
     [HttpPut("status/{id:int}")] 
     public async Task<IActionResult> ChangeStatus(int id)
     {
@@ -80,9 +80,9 @@ public class PhotosController : ControllerBase
         return Ok(new { message = "Estado de la foto cambiado exitosamente." });
     }
     
-    /// <summary>
-    /// Elimina una foto por Id.
-    /// </summary>
+    
+    // Deletes a picture by Id.
+    
     [HttpDelete("delete/{id:int}")]
     public async Task<IActionResult> DeleteAsync(int id)
     {

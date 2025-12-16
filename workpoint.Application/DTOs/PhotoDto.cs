@@ -15,6 +15,6 @@ public class PhotoResponseDto
 
 public class PhotoAddDto
 {
-    public IFormFile Photo { get; set; }  // Cambiar de Stream a IFormFile
+    public IFormFile Photo { get; set; }  // To change from Stream to IFormFile
     public int? SpaceId { get; set; }
 }

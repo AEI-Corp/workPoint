@@ -272,3 +272,7 @@ yarn dev
 pnpm dev
 # or
 bun dev
+```
+
+#### 6. SCAN ME - QR to automation with n8n, IA and Whatsapp.
+![QR-Core](Docs/Images/QR.jpg)
